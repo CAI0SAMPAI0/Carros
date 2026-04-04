@@ -3,3 +3,8 @@
 app/
 media/
 db.sqlite3
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
