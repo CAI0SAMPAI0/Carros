@@ -1,7 +1,6 @@
 .venv/
 .vscode/
 .env
-app/
 media/
 db.sqlite3
 
