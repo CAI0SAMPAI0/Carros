@@ -1,130 +1,328 @@
 {% extends "base.html" %}
+{% block title %}Garagem — AutoDrive{% endblock %}
 
 {% block content %}
-  <style>
-    .car-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 20px;
-      margin: 0 auto;
-      max-width: 1200px;
-      padding: 20px;
-    }
+<style>
+  /* ── HERO SEARCH STRIP ── */
+  .search-strip {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
 
-    .car-card {
-      background-color: #e3e1e1;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-      border-radius: 10px;
-      overflow: hidden;
-      text-align: center;
-      transition: all 0.3s ease;
-    }
+  .search-strip::before {
+    content: 'GARAGEM';
+    position: absolute;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 6rem;
+    letter-spacing: 0.05em;
+    color: var(--border);
+    pointer-events: none;
+    user-select: none;
+    line-height: 1;
+  }
 
-    .car-card:hover {
-        cursor: pointer;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-        transform: translateY(-2px);
-    }
+  .search-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
 
-    .car-card img {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-    }
+  .search-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.1em;
+    color: var(--text-hi);
+    white-space: nowrap;
+  }
 
-    .car-card h3 {
-        font-size: 20px;
-        margin-top: 10px;
-        margin-bottom: 5px;
-    }
+  .search-bar {
+    display: flex;
+    flex: 1;
+    max-width: 500px;
+    background: var(--dark);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
 
-    .car-card h2 {
-      font-size: 1.5rem;
-      margin: 10px;
-    }
+  .search-bar:focus-within {
+    border-color: var(--red);
+  }
 
-    .car-card p {
-      font-size: 1rem;
-      margin-bottom: 10px;
-    }
+  .search-bar input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-hi);
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.95rem;
+    padding: 0.75rem 1.1rem;
+  }
 
-    @media (max-width: 768px) {
-      .car-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
+  .search-bar input::placeholder { color: var(--muted); }
 
-    form {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-bottom: 20px;
-        text-align: center;
-        padding: 20px;
-    }
+  .search-bar button {
+    background: var(--red);
+    border: none;
+    color: #fff;
+    padding: 0 1.3rem;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
 
-    input[type="text"] {
-        padding: 10px;
-        font-size: 16px;
-        border: 2px solid #e3e1e1;
-        border-radius: 4px;
-        margin-right: 10px;
-        transition: border-bottom-color 0.3s ease-in-out;
-    }
+  .search-bar button:hover { background: #c01a1a; }
 
-    input[type="text"]:focus {
-        outline: none;
-        border-bottom-color: #e3e1e1;
-    }
+  /* ── GRID ── */
+  .cars-section {
+    max-width: 1200px;
+    margin: 2.5rem auto;
+    padding: 0 2rem;
+  }
 
-    button[type="submit"] {
-        background-color: #0096c7;
-        color: #fff;
-        border: none;
-        padding: 10px 20px;
-        font-size: 16px;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: background-color 0.3s ease-in-out;
-    }
+  .cars-meta {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
 
-    button[type="submit"]:hover {
-        background-color: #108eb8;
-    }
+  .cars-meta::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
 
-    a {
-      font-size: 18px;
-      color: #333;
-      text-decoration: none;
-    }
+  .car-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
 
-    a:hover {
-      color: #0096c7;
-    }
-  </style>
+  .car-link {
+    text-decoration: none;
+    display: block;
+    background: var(--panel);
+    transition: background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
 
-  <form method="GET" action="{% url 'cars_list' %}">
-    <input type="text" name="search" placeholder="Buscar carro...">
-    <button type="submit">Buscar</button>
-  </form>
+  .car-link:hover { background: #1d1d22; }
 
-  <div class="car-grid">
-    {% if cars %}
+  .car-link:hover .car-img img {
+    transform: scale(1.05);
+  }
+
+  .car-link:hover .car-name {
+    color: var(--text-hi);
+  }
+
+  .car-img {
+    aspect-ratio: 16/10;
+    overflow: hidden;
+    background: var(--dark);
+    position: relative;
+  }
+
+  .car-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+    display: block;
+  }
+
+  .no-photo {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--muted);
+  }
+
+  .no-photo svg {
+    width: 40px;
+    height: 40px;
+    opacity: 0.4;
+  }
+
+  .no-photo span {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0.5;
+  }
+
+  .car-index {
+    position: absolute;
+    top: 0.6rem;
+    left: 0.6rem;
+    background: rgba(10,10,11,0.7);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    padding: 0.1rem 0.5rem;
+    border-radius: 2px;
+  }
+
+  .car-body {
+    padding: 1rem 1.1rem 1.2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .car-brand {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 0.2rem;
+  }
+
+  .car-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.25rem;
+    letter-spacing: 0.06em;
+    color: var(--text);
+    transition: color 0.2s;
+    margin-bottom: 0.7rem;
+  }
+
+  .car-specs {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .car-year {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+  }
+
+  .car-price {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.06em;
+    color: var(--chrome);
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 5rem 2rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+  }
+
+  .empty-state svg {
+    width: 64px;
+    height: 64px;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .empty-state h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-state p {
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+
+  @media (max-width: 900px) { .car-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .car-grid { grid-template-columns: 1fr; } .search-strip::before { display: none; } }
+</style>
+
+<div class="search-strip">
+  <div class="search-inner">
+    <div class="search-label">Encontre seu carro</div>
+    <form method="GET" action="{% url 'cars_list' %}" style="flex:1; display:flex;">
+      <div class="search-bar" style="flex:1; max-width:500px;">
+        <input type="text" name="search" placeholder="Modelo, marca..." value="{{ request.GET.search }}">
+        <button type="submit">Buscar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="cars-section">
+  {% if cars %}
+    <div class="cars-meta">{{ cars|length }} veículo{{ cars|length|pluralize }} encontrado{{ cars|length|pluralize }}</div>
+    <div class="car-grid">
       {% for car in cars %}
-        <a href="{% url 'car_detail' car.pk %}">
-          <div class="car-card">
+        <a href="{% url 'car_detail' car.pk %}" class="car-link anim-fadeup" style="animation-delay: {{ forloop.counter0 }}00ms">
+          <div class="car-img">
+            <span class="car-index">{{ forloop.counter|stringformat:"02d" }}</span>
             {% if car.photo %}
-              <img src="{{ car.photo.url }}" alt="{{ car.model }} - {{ car.brand }}">
-            {%else%}
-              <p class="no-photo">Foto não disponível</p>
+              <img src="{{ car.photo.url }}" alt="{{ car.model }}">
+            {% else %}
+              <div class="no-photo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+                  <rect x="1" y="6" width="22" height="13" rx="2"/><path d="M5 6l2-3h10l2 3"/><circle cx="7.5" cy="13" r="1.5"/><circle cx="16.5" cy="13" r="1.5"/>
+                </svg>
+                <span>Sem foto</span>
+              </div>
             {% endif %}
-            <h2>{{ car.brand }} {{ car.model }}</h2>
-            <p>{{ car.factory_year }} - R$ {{ car.value }}</p>
+          </div>
+          <div class="car-body">
+            <div class="car-brand">{{ car.brand }}</div>
+            <div class="car-name">{{ car.model }}</div>
+            <div class="car-specs">
+              <span class="car-year">{{ car.factory_year }}</span>
+              <span class="car-price">R$ {{ car.value|floatformat:0 }}</span>
+            </div>
           </div>
         </a>
       {% endfor %}
-    {% else %}
-      <p class="no-results">Nenhum carro encontrado.</p>
-    {% endif %}
-  </div>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <rect x="1" y="6" width="22" height="13" rx="2"/><path d="M5 6l2-3h10l2 3"/><circle cx="7.5" cy="13" r="1.5"/><circle cx="16.5" cy="13" r="1.5"/>
+      </svg>
+      <h3>Nenhum veículo encontrado</h3>
+      <p>Tente ajustar sua busca ou cadastre um novo carro.</p>
+    </div>
+  {% endif %}
+</div>
+
 {% endblock %}

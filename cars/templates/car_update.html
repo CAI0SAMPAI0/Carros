@@ -1,123 +1,74 @@
 {% extends "base.html" %}
+{% block title %}Editar {{ object.model }} — AutoDrive{% endblock %}
 
 {% block content %}
+<style>
+  .edit-wrapper {
+    max-width: 700px;
+    margin: 3rem auto;
+    padding: 0 2rem;
+  }
 
-  <style>
-    form {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 20px;
-      background-color: #f5f5f5;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    }
+  .edit-header {
+    margin-bottom: 2rem;
+  }
 
-    form h1 {
-      font-size: 2rem;
-      margin-bottom: 20px;
-      text-align: center;
-    }
+  .edit-header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.4rem;
+    letter-spacing: 0.08em;
+    color: var(--text-hi);
+    line-height: 1;
+  }
 
-    table {
-      margin: 0 auto;
-      border-collapse: collapse;
-      width: 100%;
-      max-width: 600px;
-    }
+  .edit-header p {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-top: 0.3rem;
+  }
 
-    th, td {
-      padding: 4px;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-    }
+  .edit-form {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2rem;
+  }
 
-    th {
-      background-color: #f2f2f2;
-    }
+  .form-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
 
-    input[type="text"], input[type="number"], select, textarea {
-      padding: 8px;
-      font-size: 14px;
-      border: 2px solid #ddd;
-      border-radius: 4px;
-      width: 100%;
-      max-width: 300px;
-      margin-bottom: 8px;
-      transition: border-bottom-color 0.3s ease-in-out;
-    }
+  .form-actions .spacer { flex: 1; }
+</style>
 
-    input[type="text"]:focus, input[type="number"]:focus, select:focus, textarea:focus {
-      outline: none;
-      border-bottom-color: #0096c7;
-    }
+<div class="edit-wrapper anim-fadeup">
+  <div class="edit-header">
+    <h1>Editar Veículo</h1>
+    <p>{{ object.brand }} {{ object.model }}</p>
+  </div>
 
-    .btn {
-      background-color: #0096c7;
-      color: #fff;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.3s ease-in-out;
-    }
-
-    .buttons-container {
-      display: flex;
-      justify-content: center;
-      margin-top: 20px;
-      margin-bottom: 20px;
-    }
-
-    .btn {
-      display: inline-block;
-      background-color: #0096c7;
-      color: #fff;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.3s ease-in-out;
-      margin: 0 10px;
-    }
-
-    .btn:hover {
-      background-color: #108eb8;
-    }
-
-    .btn-danger {
-      background-color: #d9534f;
-      text-decoration: none !important;
-    }
-
-    .btn-danger:hover {
-      background-color: #d2221c;
-    }
-
-    .error-message {
-      color: #d9534f;
-      font-size: 14px;
-      margin-top: 5px;
-    }
-
-    a {
-      text-decoration: none !important;
-    }
-
-  </style>
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    <h1>Editar Carro</h1>
-    <table>
-      {{ form.as_table }}
-    </table>
-    <div>
-      <div class="buttons-container">
-        <input type="submit" value="Salvar Alterações" class="btn btn-primary">
-        <a href="{% url 'car_delete' pk=object.pk %}" class="btn btn-danger">Deletar Carro</a>
-        <a href="{% url 'cars_list' %}" class="btn btn-secondary">Cancelar</a>
+  <div class="edit-form">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <table class="django-form">
+        {{ form.as_table }}
+      </table>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+        <a href="{% url 'cars_list' %}" class="btn btn-ghost">Cancelar</a>
+        <div class="spacer"></div>
+        <a href="{% url 'car_delete' pk=object.pk %}" class="btn btn-danger">Remover Veículo</a>
       </div>
-    </div>
-  </form>
+    </form>
+  </div>
+</div>
 {% endblock %}

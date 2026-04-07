@@ -1,12 +1,156 @@
 {% extends "base.html" %}
+{% block title %}Entrar — AutoDrive{% endblock %}
 
-{% block content%}
+{% block content %}
+<style>
+  .auth-wrapper {
+    min-height: calc(100vh - 180px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .auth-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2.5rem 2.5rem 2rem;
+    width: 100%;
+    max-width: 400px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--red), transparent);
+  }
+
+  .auth-eyebrow {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 0.3rem;
+  }
+
+  .auth-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.4rem;
+    letter-spacing: 0.08em;
+    color: var(--text-hi);
+    margin-bottom: 0.3rem;
+  }
+
+  .auth-sub {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .auth-field {
+    margin-bottom: 1.2rem;
+  }
+
+  .auth-field label {
+    display: block;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.45rem;
+  }
+
+  .auth-field input {
+    width: 100%;
+    background: var(--dark);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-hi);
+    padding: 0.75rem 1rem;
+    font-family: 'Barlow', sans-serif;
+    font-size: 0.95rem;
+    transition: border-color 0.2s;
+  }
+
+  .auth-field input:focus {
+    outline: none;
+    border-color: var(--red);
+  }
+
+  .auth-submit {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.85rem;
+    font-size: 0.85rem;
+    justify-content: center;
+  }
+
+  .auth-footer {
+    margin-top: 1.5rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+  }
+
+  .auth-footer a {
+    color: var(--chrome);
+    text-decoration: none;
+  }
+
+  .auth-footer a:hover { color: var(--text-hi); }
+
+  ul.errorlist { margin-bottom: 0.5rem; }
+</style>
+
+<div class="auth-wrapper">
+  <div class="auth-card anim-fadeup">
+    <div class="auth-eyebrow">Acesso restrito</div>
+    <div class="auth-title">Entrar</div>
+    <div class="auth-sub">Faça login para gerenciar a garagem</div>
+
     <form method="post">
-        {% csrf_token %}
-        <table>
-            {{login_form.as_table}}
-        </table>
-        
-        <input type="submit" value="Entrar">
+      {% csrf_token %}
+      {% if login_form.non_field_errors %}
+        <ul class="errorlist">
+          {% for error in login_form.non_field_errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+      <div class="auth-field">
+        {{ login_form.username.errors }}
+        <label>Usuário</label>
+        {{ login_form.username }}
+      </div>
+      <div class="auth-field">
+        {{ login_form.password.errors }}
+        <label>Senha</label>
+        {{ login_form.password }}
+      </div>
+      <button type="submit" class="btn btn-primary auth-submit">Entrar na Garagem</button>
     </form>
-{%endblock%}
+
+    <div class="auth-footer">
+      Ainda não tem conta? <a href="{% url 'register' %}">Cadastre-se</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

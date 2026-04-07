@@ -1,63 +1,92 @@
 {% extends "base.html" %}
+{% block title %}Remover Veículo — AutoDrive{% endblock %}
 
 {% block content %}
-  <style>
-    .buttons-container {
-      display: flex;
-      justify-content: center;
-      margin-top: 20px;
-      margin-bottom: 20px;
-    }
+<style>
+  .delete-wrapper {
+    max-width: 500px;
+    margin: 5rem auto;
+    padding: 0 2rem;
+    text-align: center;
+  }
 
-    .btn {
-      display: inline-block;
-      background-color: #0096c7;
-      color: #fff;
-      border: none;
-      padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background-color 0.3s ease-in-out;
-      margin: 0 10px;
-    }
+  .delete-icon {
+    width: 72px;
+    height: 72px;
+    color: var(--red);
+    margin: 0 auto 1.5rem;
+    opacity: 0.8;
+  }
 
-    .btn:hover {
-      background-color: #108eb8;
-    }
+  .delete-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--red);
+    border-radius: 6px;
+    padding: 2.5rem 2rem;
+  }
 
-    .btn-danger {
-      background-color: #d9534f;
-      text-decoration: none !important;
-    }
+  .delete-card h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.08em;
+    color: var(--text-hi);
+    margin-bottom: 0.75rem;
+  }
 
-    .btn-danger:hover {
-      background-color: #d2221c;
-    }
+  .delete-card p {
+    font-size: 0.95rem;
+    font-weight: 300;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 0.4rem;
+  }
 
-    .error-message {
-      color: #d9534f;
-      font-size: 14px;
-      margin-top: 5px;
-    }
+  .car-target {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.06em;
+    color: var(--chrome);
+    margin: 0.8rem 0 1.8rem;
+  }
 
-    a {
-      text-decoration: none !important;
-    }
-  </style>
-  <div class="card">
-    <div class="card-header">
-      <h1 class="card-title">Deletar Carro</h1>
-    </div>
-    <div class="card-body">
-      <p>Tem certeza que deseja deletar o carro <strong>{{ object.brand }} {{ object.model }}</strong>?</p>
-      <form method="post">
-        {% csrf_token %}
-        <div class="buttons-container">
-          <button type="submit" class="btn btn-danger">Deletar Carro</button>
-          <a href="{% url 'car_update' pk=object.pk %}" class="btn btn-secondary">Cancelar</a>
-        </div>
-      </form>
-    </div>
+  .delete-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .warning-text {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-top: 1.2rem;
+    opacity: 0.7;
+  }
+</style>
+
+<div class="delete-wrapper anim-fadeup">
+  <div class="delete-card">
+    <svg class="delete-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+      <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+      <path d="M10 11v6"/><path d="M14 11v6"/>
+      <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+    </svg>
+    <h2>Remover Veículo</h2>
+    <p>Você está prestes a remover permanentemente:</p>
+    <div class="car-target">{{ object.brand }} {{ object.model }}</div>
+    <p>Esta ação não pode ser desfeita.</p>
+    <form method="post">
+      {% csrf_token %}
+      <div class="delete-actions">
+        <button type="submit" class="btn btn-danger">Confirmar Remoção</button>
+        <a href="{% url 'car_detail' pk=object.pk %}" class="btn btn-ghost">Cancelar</a>
+      </div>
+    </form>
+    <p class="warning-text">Ação irreversível</p>
   </div>
+</div>
 {% endblock %}
