@@ -16,6 +16,18 @@ class Car(models.Model):
     plate = models.CharField(max_length=10, blank=True, null= True)
     value = models.FloatField(blank=True, null=True)
     photo = models.ImageField(upload_to='cars/', blank=True, null=True)
+    bio = models.TextField(blank=True, null=True)
     
     def __str__(self) -> str:
         return self.model # fazendo mostrar o nome do carro ao invés do padrão feio do django
+    
+class CarInventory(models.Model):
+    cars_count = models.IntegerField()
+    cars_value = models.FloatField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self) -> str:
+        return f'{self.cars_count} - {self.cars_value}'
