@@ -1,9 +1,11 @@
 from django.urls import reverse_lazy
+from django.http import JsonResponse
 from cars.models import Car
 from cars.forms import CarModelForm
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, UpdateView, DeleteView, DetailView, CreateView
+
 
 class CarsListView(ListView):
     model = Car
@@ -41,3 +43,16 @@ class CarDeleteView(DeleteView):
     model = Car
     template_name = 'car_delete.html'
     success_url = '/cars/'
+
+def cars_api_list(request):
+    cars = Car.objects.all().order_by('model')
+    data = []
+    for car in cars:
+        data.append({
+            'id': car.id,
+            'marca': car.brand.name if car.brand else None,
+            'modelo': car.model,
+            'ano': car.model_year,
+            'preco': car.value,
+        })
+    return JsonResponse(data, safe=False)
