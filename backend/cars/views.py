@@ -47,19 +47,71 @@ class CarDeleteView(DeleteView):
     success_url = '/cars/'
 
 def cars_api_list(request):
-    cars = Car.objects.all().order_by('model')
+    cars = Car.objects.select_related('brand').all().order_by('model')
+    
+    # 1. Filtro por busca (modelo, marca ou descrição)
+    search = request.GET.get('search')
+    if search:
+        from django.db.models import Q
+        cars = cars.filter(
+            Q(model__icontains=search) | 
+            Q(brand__name__icontains=search) | 
+            Q(bio__icontains=search)
+        )
+        
+    # 2. Filtro por marca
+    brand = request.GET.get('brand')
+    if brand:
+        cars = cars.filter(brand__name=brand)
+        
+    total_count = cars.count()
+    
+    # 3. Paginação
+    page = request.GET.get('page', 1)
+    try:
+        page = int(page)
+    except ValueError:
+        page = 1
+        
+    page_size = 15
+    start = (page - 1) * page_size
+    end = start + page_size
+    
+    cars_page = cars[start:end]
+    
     data = []
-    for car in cars:
+    from django.conf import settings
+    cloud_name = settings.CLOUDINARY_STORAGE.get('CLOUD_NAME') if hasattr(settings, 'CLOUDINARY_STORAGE') else None
+
+    for car in cars_page:
+        foto_url = None
+        if car.photo:
+            photo_path = str(car.photo)
+            if photo_path:
+                # Se estiver usando Cloudinary, gera a URL localmente sem fazer requisições lentas de rede
+                if cloud_name and not photo_path.startswith('http'):
+                    foto_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{photo_path}"
+                else:
+                    try:
+                        foto_url = car.photo.url
+                    except Exception:
+                        pass
+                
         data.append({
             'id': car.id,
             'marca': car.brand.name if car.brand else None,
             'modelo': car.model,
             'ano': car.model_year,
             'preco': car.value,
-            'foto': car.photo.url if car.photo else None,
+            'foto': foto_url,
             'descricao': car.bio,
         })
-    return JsonResponse(data, safe=False)
+        
+    return JsonResponse({
+        'results': data,
+        'count': total_count,
+        'has_next': end < total_count
+    })
 
 def brands_api_list(request):
     from cars.models import Brand
@@ -91,6 +143,20 @@ def car_detail_api(request, pk):
         return JsonResponse({'success': False, 'error': 'Car not found'}, status=404)
         
     if request.method == 'GET':
+        from django.conf import settings
+        cloud_name = settings.CLOUDINARY_STORAGE.get('CLOUD_NAME') if hasattr(settings, 'CLOUDINARY_STORAGE') else None
+        foto_url = None
+        if car.photo:
+            photo_path = str(car.photo)
+            if photo_path:
+                if cloud_name and not photo_path.startswith('http'):
+                    foto_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{photo_path}"
+                else:
+                    try:
+                        foto_url = car.photo.url
+                    except Exception:
+                        pass
+
         return JsonResponse({
             'id': car.id,
             'brand': car.brand.id if car.brand else None,
@@ -100,7 +166,7 @@ def car_detail_api(request, pk):
             'ano_modelo': car.model_year,
             'placa': car.plate,
             'preco': car.value,
-            'foto': car.photo.url if car.photo else None,
+            'foto': foto_url,
             'descricao': car.bio,
         })
         
