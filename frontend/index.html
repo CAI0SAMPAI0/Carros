@@ -1,125 +1,13 @@
 <!DOCTYPE html>
-<html lang="pt-br" class="scroll-smooth">
-
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoDrive - Encontre seu carro perfeito</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,300&family=Barlow+Condensed:wght@400;600;700&display=swap"
-        rel="stylesheet">
-
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta http-equiv="refresh" content="0; url=cars/">
+    <title>AutoDrive - Redirecting</title>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'brand-black': '#0a0a0b',
-                        'brand-dark': '#111114',
-                        'brand-panel': '#18181c',
-                        'brand-border': '#2a2a30',
-                        'brand-muted': '#3a3a42',
-                        'brand-text-dim': '#6b6b7a',
-                        'brand-text': '#c8c8d4',
-                        'brand-text-hi': '#eeeef5',
-                        'brand-red': '#e52222',
-                        'brand-red-dim': '#7a1010',
-                    },
-                    fontFamily: {
-                        bebas: ['Bebas Neue', 'sans-serif'],
-                        barlow: ['Barlow', 'sans-serif'],
-                        'barlow-cond': ['Barlow Condensed', 'sans-serif'],
-                    }
-                }
-            }
-        }
+        window.location.href = "cars/";
     </script>
-    <style>
-        body {
-            background-image: repeating-linear-gradient(105deg,
-                    transparent 0px,
-                    transparent 18px,
-                    rgba(255, 255, 255, 0.018) 18px,
-                    rgba(255, 255, 255, 0.018) 19px);
-        }
-    </style>
 </head>
-
-<body class="bg-brand-black text-brand-text font-barlow min-h-screen flex flex-col">
-
-    <!-- NAVBAR -->
-    <nav
-        class="sticky top-0 z-50 bg-brand-black/90 backdrop-blur-md border-b border-brand-border h-16 px-8 flex items-center justify-between">
-        <a href="index.html" class="font-bebas text-3xl tracking-widest text-brand-text-hi flex items-center gap-2">
-            <span class="w-1.5 h-1.5 bg-brand-red rounded-full shadow-[0_0_10px_#e52222]"></span>
-            Auto<span class="text-brand-red">Drive</span>
-        </a>
-        <ul class="flex items-center gap-1 font-barlow-cond text-xs font-semibold tracking-widest uppercase list-none">
-            <!-- Simulação de autenticação -->
-            <li class="text-brand-text-dim border-l-2 border-brand-red px-3.5 py-1.5">Olá, Admin!</li>
-            <li class="bg-brand-red text-white px-4 py-1.5 rounded-sm hover:bg-brand-red/80 transition-colors">
-                <a href="pages/cadastrar-carro.html">Cadastrar</a>
-            </li>
-
-            <li><a href="index.html"
-                    class="text-brand-text-dim hover:text-brand-text-hi hover:bg-brand-panel px-3.5 py-1.5 rounded-sm transition-all">Garagem</a>
-            </li>
-            <li><a href="pages/login.html"
-                    class="text-brand-text-dim hover:text-brand-text-hi hover:bg-brand-panel px-3.5 py-1.5 rounded-sm transition-all">Sair</a>
-            </li>
-        </ul>
-    </nav>
-
-    <!-- CONTEÚDO PRINCIPAL -->
-    <main class="flex-1 pb-16">
-        <!-- Faixa de Cabeçalho da Página -->
-        <header class="bg-brand-panel border-b border-brand-border py-10 px-8 relative overflow-hidden">
-            <h1 class="font-bebas text-5xl tracking-wide text-brand-text-hi">Garagem</h1>
-            <p class="font-barlow-cond text-xs tracking-[0.15em] text-brand-text-dim mt-2 uppercase">Explore e gerencie
-                seus automóveis</p>
-        </header>
-
-        <!-- Container do grid de carros -->
-        <div class="max-w-7xl mx-auto px-8 mt-8">
-            <div class="flex flex-col md:flex-row gap-8">
-                <!-- Seção Esquerda: Imagem ou Destaque -->
-                <div
-                    class="w-full md:w-1/2 flex items-center justify-center bg-brand-panel border border-brand-border rounded-md p-8 min-h-[300px]">
-                    <span class="text-brand-text-dim font-barlow-cond tracking-widest uppercase">Sem Imagem de
-                        Destaque</span>
-                </div>
-                <!-- Seção Direita: Mensagem e Ação -->
-                <div class="w-full md:w-1/2 flex flex-col justify-center">
-                    <h2 class="text-6xl font-bold font-bebas text-brand-text-hi leading-none mb-4">Encontre seu carro
-                        perfeito</h2>
-                    <p class="text-brand-text-dim text-lg mb-6 max-w-md">Consulte a listagem completa de carros, filtre
-                        por marca e ano, ou adicione um novo carro ao catálogo.</p>
-                    <div>
-                        <a href="index.html"
-                            class="inline-block bg-brand-red text-white font-barlow-cond font-bold tracking-widest text-sm uppercase px-8 py-3 rounded-sm hover:bg-brand-red/90 transition-all shadow-[0_4px_20px_rgba(229,34,34,0.35)]">
-                            Explorar Garagem
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- FOOTER -->
-    <footer class="bg-brand-panel border-t border-brand-border px-8 py-6 flex items-center justify-between">
-        <div class="font-bebas text-lg tracking-widest text-brand-text-dim">
-            Auto<span class="text-brand-red">Drive</span>
-        </div>
-        <p class="font-barlow-cond text-[10px] tracking-widest text-brand-muted uppercase">
-            &copy; 2026 Caio Sampaio &mdash; Todos os direitos reservados
-        </p>
-    </footer>
-
+<body>
+    <p>Redirecionando para a garagem...</p>
 </body>
-
 </html>
