@@ -1,4 +1,5 @@
 import { apiFetch } from './api';
+import { showToast } from './toast';
 
 document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('login-form') as HTMLFormElement | null;
@@ -42,13 +43,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 
                 if (data && data.success) {
-                    // Guarda o nome de usuário logado
                     localStorage.setItem('username', data.username);
-                    alert(data.message || 'Login bem-sucedido!');
-                    window.location.href = '../';
+                    showToast(data.message || 'Login realizado com sucesso!', 'success');
+                    setTimeout(() => {
+                        window.location.href = '../cars/';
+                    }, 1500);
                 }
             } catch (err: any) {
-                alert('Erro ao fazer login: ' + err.message);
+                showToast('Erro ao fazer login: ' + err.message, 'error');
             }
         });
     }
@@ -74,16 +76,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 
                 if (data && data.success) {
-                    alert(data.message || 'Cadastro realizado com sucesso!');
-                    window.location.href = '../login/';
+                    showToast(data.message || 'Cadastro realizado com sucesso!', 'success');
+                    setTimeout(() => {
+                        window.location.href = '../login/';
+                    }, 1500);
                 }
             } catch (err: any) {
-                // Trata múltiplos erros de validação se retornados pelo form do Django
                 if (err.message && typeof err.message === 'object') {
                     const errors = Object.values(err.message).join('\n');
-                    alert('Erro no cadastro:\n' + errors);
+                    showToast('Erro no cadastro:\n' + errors, 'error');
                 } else {
-                    alert('Erro ao cadastrar: ' + err.message);
+                    showToast('Erro ao cadastrar: ' + err.message, 'error');
                 }
             }
         });

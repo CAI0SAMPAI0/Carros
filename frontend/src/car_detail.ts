@@ -1,5 +1,6 @@
 import { apiFetch } from './api';
 import { API_BASE_URL } from './config';
+import { showToast } from './toast';
 
 interface CarDetails {
     id: number;
@@ -20,8 +21,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const carId = urlParams.get('id');
 
     if (!carId) {
-        alert('Carro não especificado.');
-        window.location.href = '../cars/';
+        showToast('Carro não especificado.', 'error');
+        setTimeout(() => {
+            window.location.href = '../cars/';
+        }, 1500);
         return;
     }
 
@@ -43,18 +46,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (car) {
             renderCarDetails(car);
         } else {
-            alert('Não foi possível encontrar os detalhes do carro.');
-            window.location.href = '../cars/';
+            showToast('Não foi possível encontrar os detalhes do carro.', 'error');
+            setTimeout(() => {
+                window.location.href = '../cars/';
+            }, 1500);
         }
     } catch (err) {
         console.error('Erro ao buscar detalhes do carro:', err);
-        alert('Erro ao carregar detalhes do carro.');
-        window.location.href = '../cars/';
+        showToast('Erro ao carregar detalhes do carro.', 'error');
+        setTimeout(() => {
+            window.location.href = '../cars/';
+        }, 1500);
     }
 
     // Função para renderizar os dados no DOM
     function renderCarDetails(car: CarDetails) {
-        const fotoUrl = car.foto ? `${API_BASE_URL}${car.foto}` : '';
+        const fotoUrl = car.foto 
+            ? (car.foto.startsWith('http') ? car.foto : `${API_BASE_URL}${car.foto}`) 
+            : '';
         const precoFormatado = car.preco 
             ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(car.preco)
             : 'Preço sob consulta';
@@ -120,13 +129,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                             method: 'DELETE'
                         });
                         if (result) {
-                            alert('Carro excluído com sucesso!');
-                            window.location.href = '../cars/';
+                            showToast('Carro excluído com sucesso!', 'success');
+                            setTimeout(() => {
+                                window.location.href = '../cars/';
+                            }, 1500);
                         } else {
-                            alert('Falha ao excluir carro.');
+                            showToast('Falha ao excluir carro.', 'error');
                         }
                     } catch (err: any) {
-                        alert('Erro ao excluir carro: ' + err.message);
+                        showToast('Erro ao excluir carro: ' + err.message, 'error');
                     }
                 }
             });

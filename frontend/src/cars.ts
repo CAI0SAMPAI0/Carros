@@ -92,7 +92,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         carsGrid.innerHTML = cars.map((car, index) => {
-            const fotoUrl = car.foto ? `${API_BASE_URL}${car.foto}` : '';
+            const fotoUrl = car.foto 
+                ? (car.foto.startsWith('http') ? car.foto : `${API_BASE_URL}${car.foto}`) 
+                : '';
             const precoFormatado = car.preco 
                 ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(car.preco)
                 : 'Preço sob consulta';

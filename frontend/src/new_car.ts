@@ -1,5 +1,6 @@
 import { apiFetch } from './api';
 import { API_BASE_URL } from './config';
+import { showToast } from './toast';
 
 interface Brand {
     id: number;
@@ -23,16 +24,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 1. Verificar autenticação
     const username = localStorage.getItem('username');
     if (!username) {
-        alert('Você precisa estar logado para acessar esta página.');
-        window.location.href = '../login/';
+        showToast('Você precisa estar logado para acessar esta página.', 'error');
+        setTimeout(() => {
+            window.location.href = '../login/';
+        }, 1500);
         return;
     }
 
     const brandSelect = document.getElementById('brand') as HTMLSelectElement | null;
     const carForm = document.getElementById('car-form') as HTMLFormElement | null;
-    const pageTitle = document.querySelector('h2') as HTMLHeadingElement | null;
-    const pageSub = document.querySelector('p') as HTMLParagraphElement | null;
-    const submitBtn = carForm?.querySelector('button[type="submit"]') as HTMLButtonElement | null;
+    const pageTitle = document.getElementById('page-title') as HTMLHeadingElement | null;
+    const pageSub = document.getElementById('page-subtitle') as HTMLParagraphElement | null;
+    const submitBtn = document.getElementById('btn-save-car') as HTMLButtonElement | null;
 
     // Obter ID do carro se estivermos editando
     const urlParams = new URLSearchParams(window.location.search);
@@ -58,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 3. Se for modo edição, carregar os dados do carro e preencher o formulário
     if (isEditMode && carId) {
-        if (pageTitle) pageTitle.textContent = 'Editar Carro';
+        if (pageTitle) pageTitle.textContent = 'Editar Veículo';
         if (pageSub) pageSub.textContent = 'Atualize as informações do automóvel';
         if (submitBtn) submitBtn.textContent = 'Salvar Alterações';
 
@@ -82,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } catch (err) {
             console.error('Erro ao carregar detalhes do carro para edição:', err);
-            alert('Não foi possível carregar os dados do carro.');
+            showToast('Não foi possível carregar os dados do carro.', 'error');
         }
     }
 
@@ -114,14 +117,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const result = await response.json().catch(() => ({}));
                 if (response.ok && result.success) {
-                    alert(isEditMode ? 'Carro atualizado com sucesso!' : 'Carro cadastrado com sucesso!');
-                    window.location.href = '../cars/';
+                    showToast(isEditMode ? 'Carro atualizado com sucesso!' : 'Carro cadastrado com sucesso!', 'success');
+                    setTimeout(() => {
+                        window.location.href = '../cars/';
+                    }, 1500);
                 } else {
                     const errorMsg = result.error || (result.errors ? JSON.stringify(result.errors) : 'Erro desconhecido');
-                    alert('Erro ao salvar carro: ' + errorMsg);
+                    showToast('Erro ao salvar carro: ' + errorMsg, 'error');
                 }
             } catch (err: any) {
-                alert('Erro de conexão ao salvar carro: ' + err.message);
+                showToast('Erro de conexão ao salvar carro: ' + err.message, 'error');
             }
         });
     }
