@@ -5,6 +5,8 @@ from cars.forms import CarModelForm
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic import ListView, UpdateView, DeleteView, DetailView, CreateView
+from django.views.decorators.csrf import csrf_exempt
+
 
 
 class CarsListView(ListView):
@@ -58,3 +60,60 @@ def cars_api_list(request):
             'descricao': car.bio,
         })
     return JsonResponse(data, safe=False)
+
+def brands_api_list(request):
+    from cars.models import Brand
+    brands = Brand.objects.all().order_by('name')
+    data = []
+    for brand in brands:
+        data.append({
+            'id': brand.id,
+            'name': brand.name,
+        })
+    return JsonResponse(data, safe=False)
+
+@csrf_exempt
+def car_create_api(request):
+    if request.method == 'POST':
+        form = CarModelForm(request.POST, request.FILES)
+        if form.is_valid():
+            car = form.save()
+            return JsonResponse({'success': True, 'id': car.id})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors.get_json_data()}, status=400)
+    return JsonResponse({'success': False, 'error': 'Method not allowed'}, status=405)
+
+@csrf_exempt
+def car_detail_api(request, pk):
+    try:
+        car = Car.objects.get(pk=pk)
+    except Car.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Car not found'}, status=404)
+        
+    if request.method == 'GET':
+        return JsonResponse({
+            'id': car.id,
+            'brand': car.brand.id if car.brand else None,
+            'marca': car.brand.name if car.brand else None,
+            'modelo': car.model,
+            'ano_fabricacao': car.factory_year,
+            'ano_modelo': car.model_year,
+            'placa': car.plate,
+            'preco': car.value,
+            'foto': car.photo.url if car.photo else None,
+            'descricao': car.bio,
+        })
+        
+    elif request.method == 'POST':
+        form = CarModelForm(request.POST, request.FILES, instance=car)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'success': True})
+        else:
+            return JsonResponse({'success': False, 'errors': form.errors.get_json_data()}, status=400)
+            
+    elif request.method == 'DELETE':
+        car.delete()
+        return JsonResponse({'success': True})
+
+

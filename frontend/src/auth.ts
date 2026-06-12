@@ -1,9 +1,10 @@
-// Lógica de Autenticação (Login, Registro e Toggle de Senha)
+import { apiFetch } from './api';
+
 document.addEventListener('DOMContentLoaded', () => {
-    const loginForm = document.getElementById('login-form');
-    const registerForm = document.getElementById('register-form');
-    const togglePasswordBtn = document.getElementById('toggle-password');
-    const passwordInput = document.getElementById('password');
+    const loginForm = document.getElementById('login-form') as HTMLFormElement | null;
+    const registerForm = document.getElementById('register-form') as HTMLFormElement | null;
+    const togglePasswordBtn = document.getElementById('toggle-password') as HTMLButtonElement | null;
+    const passwordInput = document.getElementById('password') as HTMLInputElement | null;
 
     // 1. Alternar Visibilidade da Senha (Olho)
     if (togglePasswordBtn && passwordInput) {
@@ -26,11 +27,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const username = loginForm.username.value;
-            const password = loginForm.password.value;
+            const usernameInput = loginForm.elements.namedItem('username') as HTMLInputElement | null;
+            const passwordInputEl = loginForm.elements.namedItem('password') as HTMLInputElement | null;
+            
+            if (!usernameInput || !passwordInputEl) return;
+            
+            const username = usernameInput.value;
+            const password = passwordInputEl.value;
             
             try {
-                const data = await apiFetch('/login/', {
+                const data = await apiFetch<any>('/login/', {
                     method: 'POST',
                     body: JSON.stringify({ username, password })
                 });
@@ -39,9 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Guarda o nome de usuário logado
                     localStorage.setItem('username', data.username);
                     alert(data.message || 'Login bem-sucedido!');
-                    window.location.href = '../index.html';
+                    window.location.href = '../';
                 }
-            } catch (err) {
+            } catch (err: any) {
                 alert('Erro ao fazer login: ' + err.message);
             }
         });
@@ -51,21 +57,27 @@ document.addEventListener('DOMContentLoaded', () => {
     if (registerForm) {
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const username = registerForm.username.value;
-            const email = registerForm.email.value;
-            const password = registerForm.password.value;
+            const usernameInput = registerForm.elements.namedItem('username') as HTMLInputElement | null;
+            const emailInput = registerForm.elements.namedItem('email') as HTMLInputElement | null;
+            const passwordInputEl = registerForm.elements.namedItem('password') as HTMLInputElement | null;
+            
+            if (!usernameInput || !emailInput || !passwordInputEl) return;
+            
+            const username = usernameInput.value;
+            const email = emailInput.value;
+            const password = passwordInputEl.value;
             
             try {
-                const data = await apiFetch('/register/', {
+                const data = await apiFetch<any>('/register/', {
                     method: 'POST',
                     body: JSON.stringify({ username, email, password })
                 });
                 
                 if (data && data.success) {
                     alert(data.message || 'Cadastro realizado com sucesso!');
-                    window.location.href = 'login.html';
+                    window.location.href = '../login/';
                 }
-            } catch (err) {
+            } catch (err: any) {
                 // Trata múltiplos erros de validação se retornados pelo form do Django
                 if (err.message && typeof err.message === 'object') {
                     const errors = Object.values(err.message).join('\n');
