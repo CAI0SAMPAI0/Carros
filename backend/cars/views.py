@@ -120,14 +120,14 @@ def cars_api_list(request):
             'descricao': car.bio,
         })
         
-    return JsonResponse({
+    response_data = {
         'results': data,
         'count': total_count,
         'has_next': end < total_count
-    })
-
-    cache.set(cache_key, data, 60 * 60 * 24)
-    return JsonResponse(data)
+    }
+    
+    cache.set(cache_key, response_data, 60 * 60 * 24)
+    return JsonResponse(response_data)
 
 def brands_api_list(request):
     from cars.models import Brand
