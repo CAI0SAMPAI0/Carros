@@ -178,13 +178,6 @@ def main():
             if not brand_name:
                 continue
 
-            # Pergunta se deseja continuar a cada 15 marcas processadas
-            if processed_count > 0 and processed_count % 15 == 0:
-                print(f"\n--- Lote de 15 marcas finalizado! ({processed_count} marcas processadas até agora) ---", flush=True)
-                choice = input("Deseja continuar com as próximas 15 marcas? (S/n): ").strip().lower()
-                if choice == 'n':
-                    print("Processamento pausado pelo usuário. Finalizando script.", flush=True)
-                    break
 
             processed_count += 1
             print(f"\n[{processed_count}] Processando marca: {brand_name}...", flush=True)
