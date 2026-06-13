@@ -858,3 +858,103 @@ footer p {
   .detail-wrapper { grid-template-columns: 1fr; }
 }
 
+/* ── RESPONSIVENESS TWEAKS FOR SMALLER SCREENS ── */
+@media (max-width: 768px) {
+  .search-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .search-label {
+    text-align: center;
+    font-size: 1.4rem;
+  }
+  
+  .search-bar {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .cars-section {
+    padding: 0 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  nav {
+    height: auto;
+    flex-direction: column;
+    padding: 0.8rem 1rem;
+    gap: 0.8rem;
+    align-items: center;
+  }
+
+  .nav-logo {
+    font-size: 1.6rem;
+  }
+
+  .nav-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem 0.5rem;
+    width: 100%;
+  }
+
+  .nav-links a, .nav-links button {
+    font-size: 0.72rem;
+    padding: 0.35rem 0.6rem;
+  }
+
+  .nav-greeting {
+    padding: 0.35rem 0.6rem;
+    font-size: 0.72rem;
+    border-left: 2px solid var(--red);
+  }
+
+  .form-card {
+    padding: 1.5rem;
+    margin: 1.5rem auto;
+  }
+
+  footer {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+    padding: 1.25rem 1rem;
+  }
+
+  .detail-wrapper {
+    margin: 1.5rem auto;
+    padding: 0 1rem;
+    gap: 1.5rem;
+  }
+
+  .detail-header {
+    padding: 1.25rem;
+  }
+
+  .detail-model {
+    font-size: 2rem;
+  }
+
+  .detail-price {
+    font-size: 1.6rem;
+  }
+
+  .edit-wrapper {
+    margin: 1.5rem auto;
+    padding: 0 1rem;
+  }
+
+  .edit-form {
+    padding: 1.5rem;
+  }
+
+  .back-link {
+    margin: 1.5rem auto 0;
+    padding: 0 1rem;
+  }
+}
+
+

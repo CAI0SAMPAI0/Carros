@@ -5,12 +5,17 @@ import json
 import re
 import urllib.parse
 import requests
+import time
 from dotenv import load_dotenv
 from groq import Groq
 from django.core.files.base import ContentFile
 
-# 1. Configurar o ambiente Django para o script rodar de forma independente
+# 1. Carregar variáveis de ambiente do diretório pai (.env) ANTES do django setup
 backend_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+dotenv_path = os.path.join(backend_path, '.env')
+load_dotenv(dotenv_path)
+
+# 2. Configurar o ambiente Django para o script rodar de forma independente
 if backend_path not in sys.path:
     sys.path.append(backend_path)
 
@@ -21,62 +26,12 @@ django.setup()
 # Agora podemos importar os modelos do Django com segurança
 from cars.models import Brand, Car
 
-# 2. Carregar variáveis de ambiente
-load_dotenv()
+# 3. Validar chaves de API e inicializar cliente
 GROQ_API_KEY = os.getenv('GROQ_API_KEY')
-
 if not GROQ_API_KEY:
     raise ValueError("A variável de ambiente GROQ_API_KEY não foi encontrada no arquivo .env.")
 
 client = Groq(api_key=GROQ_API_KEY)
-
-import time
-
-def get_car_image_url(brand_name, model_name, year):
-    """
-    Busca na internet (Bing Images) uma imagem correspondente ao carro e retorna a URL direta.
-    """
-    # Evita termos duplicados como "Fiat Fiat Uno"
-    if model_name.lower().startswith(brand_name.lower()):
-        query = f"{model_name} {year or ''} carro"
-    else:
-        query = f"{brand_name} {model_name} {year or ''} carro"
-        
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-    }
-    url = f"https://www.bing.com/images/search?q={urllib.parse.quote(query)}&__noscript=1"
-    
-    # Pequena pausa para evitar rate limit / CAPTCHA por requisições rápidas consecutivas
-    time.sleep(1.5)
-    
-    try:
-        response = requests.get(url, headers=headers, timeout=10)
-        if response.status_code == 200:
-            # Captura a URL direta da imagem contida na tag "murl" do HTML do Bing
-            urls = re.findall(r'"murl":"(http[^"]+)"', response.text)
-            if urls:
-                return urls[0]
-    except Exception as e:
-        print(f"   [Erro Busca Imagem] Não foi possível buscar imagem para '{query}': {e}", flush=True)
-    return None
-
-def download_and_save_car_image(car_obj, image_url):
-    """
-    Faz o download da imagem a partir da URL e a salva no ImageField do modelo Car.
-    """
-    if not image_url:
-        return False
-    try:
-        response = requests.get(image_url, timeout=10)
-        if response.status_code == 200:
-            filename = f"{car_obj.brand.name}_{car_obj.model}_{car_obj.model_year}.jpg".replace(" ", "_").lower()
-            # Salva o conteúdo no ImageField do Django (faz upload automático para Cloudinary / Mídia local)
-            car_obj.photo.save(filename, ContentFile(response.content), save=True)
-            return True
-    except Exception as e:
-        print(f"   [Erro Download Imagem] Falha ao baixar/salvar imagem de {image_url}: {e}")
-    return False
 
 def get_car_models_from_ai(brand_name, num_cars=5):
     """
@@ -146,10 +101,10 @@ def main():
         print(f"Erro: O arquivo brands.csv não foi encontrado em {csv_file_path}", flush=True)
         return
 
-    print("Iniciando importação de carros com IA e imagens...", flush=True)
+    print("Iniciando importação de carros com IA...", flush=True)
     
     processed_count = 0
-    with open(csv_file_path, mode='r', encoding='utf-8') as f:
+    with open(csv_file_path, mode='r', encoding='utf-8-sig') as f:
         reader = csv.reader(f)
         
         for row in reader:
@@ -197,25 +152,10 @@ def main():
                     }
                 )
                 
-                # Se o carro acabou de ser criado, ou se já existe mas não possui imagem
-                if car_created or not car_obj.photo:
-                    if not car_created:
-                        print(f"   [Sem Imagem] {brand_name} {model_name} (Existente) - Buscando imagem...", flush=True)
-                    else:
-                        print(f"   [Adicionado] {brand_name} {model_name} - R$ {car_obj.value} ({car_obj.model_year})", flush=True)
-                    
-                    # Busca imagem e faz download
-                    img_url = get_car_image_url(brand_name, model_name, car_obj.model_year)
-                    if img_url:
-                        success = download_and_save_car_image(car_obj, img_url)
-                        if success:
-                            print(f"      -> Imagem baixada e salva com sucesso!", flush=True)
-                        else:
-                            print(f"      -> Falha ao salvar a imagem.", flush=True)
-                    else:
-                        print(f"      -> Nenhuma imagem encontrada na busca.", flush=True)
+                if car_created:
+                    print(f"   [Adicionado] {brand_name} {model_name} - R$ {car_obj.value} ({car_obj.model_year})", flush=True)
                 else:
-                    print(f"   [Ignorado] {brand_name} {model_name} (Já existe com imagem)", flush=True)
+                    print(f"   [Ignorado] {brand_name} {model_name} (Já existente)", flush=True)
 
 if __name__ == '__main__':
     main()
