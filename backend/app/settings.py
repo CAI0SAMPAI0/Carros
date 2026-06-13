@@ -108,6 +108,11 @@ redis_url = os.getenv("REDIS_URL")
 if redis_url:
     if not (redis_url.startswith("redis://") or redis_url.startswith("rediss://")):
         redis_url = f"redis://{redis_url}"
+    if "?" in redis_url:
+        redis_url = f"{redis_url}&protocol=2"
+    else:
+        redis_url = f"{redis_url}?protocol=2"
+        
     CACHES = {
         "default": {
             "BACKEND": "django_redis.cache.RedisCache",
