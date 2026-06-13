@@ -35,42 +35,42 @@ client = Groq(api_key=GROQ_API_KEY)
 
 def get_car_image_url(make, model, year):
     """
-    Busca a imagem principal de um artigo da Wikipedia para o carro.
+    Busca uma imagem do carro diretamente no Wikimedia Commons para maior precisão.
     """
-    query = f"{make} {model}"
-    headers = {"User-Agent": "CarrosBot/1.0 (seu-email@exemplo.com)"}
+    headers = {"User-Agent": "CarrosBot/1.0 (cmsampaio71@gmail.com)"}
+    search_url = "https://commons.wikimedia.org/w/api.php"
     
-    # Tenta em português e depois em inglês
-    for lang in ["pt", "en"]:
-        search_url = f"https://{lang}.wikipedia.org/w/api.php"
-        search_params = {
-            "action": "query",
-            "list": "search",
-            "srsearch": query,
-            "format": "json",
-            "srlimit": 1
-        }
+    search_params = {
+        "action": "query",
+        "generator": "search",
+        "gsrsearch": f"{make} {model} car filetype:bitmap",
+        "gsrlimit": 5,
+        "prop": "imageinfo",
+        "iiprop": "url",
+        "iiurlwidth": 1000,
+        "format": "json"
+    }
+    
+    try:
+        res = requests.get(search_url, params=search_params, headers=headers, timeout=10).json()
+        pages = res.get("query", {}).get("pages", {})
         
-        try:
-            res = requests.get(search_url, params=search_params, headers=headers, timeout=10).json()
-            search_results = res.get("query", {}).get("search", [])
-            if search_results:
-                title = search_results[0]["title"]
+        # Ordena os resultados por relevância (índice retornado pela busca)
+        pages_list = list(pages.values())
+        pages_list.sort(key=lambda x: x.get("index", 999))
+        
+        for page_data in pages_list:
+            title = page_data.get("title", "").lower()
+            if "imageinfo" in page_data:
+                image_info = page_data["imageinfo"][0]
+                url = image_info.get("thumburl") or image_info.get("url")
                 
-                img_params = {
-                    "action": "query",
-                    "titles": title,
-                    "prop": "pageimages",
-                    "format": "json",
-                    "pithumbsize": 1000
-                }
-                img_res = requests.get(search_url, params=img_params, headers=headers, timeout=10).json()
-                pages = img_res.get("query", {}).get("pages", {})
-                for page_id in pages:
-                    if "thumbnail" in pages[page_id]:
-                        return pages[page_id]["thumbnail"]["source"]
-        except Exception:
-            continue
+                # Ignorar imagens que parecem ser logos ou emblemas
+                if "logo" not in url.lower() and "emblem" not in url.lower() and "logo" not in title and "emblem" not in title and "badge" not in title:
+                    return url
+    except Exception as e:
+        print(f"   [Erro API Commons] {e}", flush=True)
+        
     return None
 
 def download_and_save_image(car_obj, image_url):
@@ -83,7 +83,8 @@ def download_and_save_image(car_obj, image_url):
         
     try:
         print(f"   [Imagem] Baixando: {image_url}", flush=True)
-        response = requests.get(image_url, timeout=15)
+        headers = {"User-Agent": "CarrosBot/1.0 (cmsampaio71@gmail.com)"}
+        response = requests.get(image_url, headers=headers, timeout=15)
         if response.status_code == 200:
             file_name = f"{car_obj.brand.name}_{car_obj.model}_{car_obj.model_year or 'unknown'}.jpg".replace(" ", "_").lower()
             car_obj.photo.save(file_name, ContentFile(response.content), save=True)
