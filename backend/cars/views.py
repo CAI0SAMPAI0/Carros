@@ -95,20 +95,16 @@ def cars_api_list(request):
     
     data = []
     from django.conf import settings
-    cloud_name = settings.CLOUDINARY_STORAGE.get('CLOUD_NAME') if hasattr(settings, 'CLOUDINARY_STORAGE') else None
 
     for car in cars_page:
         foto_url = None
         if car.photo:
             photo_path = str(car.photo)
             if photo_path:
-                if cloud_name and not photo_path.startswith('http'):
-                    foto_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/media/{photo_path}"
+                if photo_path.startswith('http'):
+                    foto_url = photo_path
                 else:
-                    try:
-                        foto_url = car.photo.url
-                    except Exception:
-                        pass
+                    foto_url = f"{settings.MEDIA_URL}{photo_path}"
                 
         data.append({
             'id': car.id,
@@ -160,18 +156,14 @@ def car_detail_api(request, pk):
         
     if request.method == 'GET':
         from django.conf import settings
-        cloud_name = settings.CLOUDINARY_STORAGE.get('CLOUD_NAME') if hasattr(settings, 'CLOUDINARY_STORAGE') else None
         foto_url = None
         if car.photo:
             photo_path = str(car.photo)
             if photo_path:
-                if cloud_name and not photo_path.startswith('http'):
-                    foto_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/media/{photo_path}"
+                if photo_path.startswith('http'):
+                    foto_url = photo_path
                 else:
-                    try:
-                        foto_url = car.photo.url
-                    except Exception:
-                        pass
+                    foto_url = f"{settings.MEDIA_URL}{photo_path}"
 
         return JsonResponse({
             'id': car.id,

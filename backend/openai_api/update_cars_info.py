@@ -6,7 +6,6 @@ import asyncio
 import httpx
 from dotenv import load_dotenv
 from groq import AsyncGroq
-from django.core.files.base import ContentFile
 from asgiref.sync import sync_to_async
 
 # 1. Carregar variáveis de ambiente do diretório pai (.env) ANTES do django setup
@@ -92,41 +91,19 @@ def parse_price_string(price_str):
 
 async def is_car_photo_broken(http_client, car):
     """
-    Verifica se a foto atual do carro no banco é válida.
-    Se for um caminho local, verifica se o arquivo existe fisicamente.
-    Se for um link externo ou Cloudinary, faz um request HEAD rápido.
+    Verifica se a foto atual do carro é válida checando se o arquivo existe
+    fisicamente na pasta backend/images/.
     """
     if not car.photo:
         return True
     
     photo_path_str = str(car.photo)
-    if photo_path_str and not photo_path_str.startswith('http'):
-        # Verifica se o arquivo existe localmente na pasta backend/images ou backend/media
-        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        local_file_path = os.path.join(backend_dir, photo_path_str.replace('/', os.sep))
-        if os.path.exists(local_file_path):
-            return False  # O arquivo existe localmente
-            
-    try:
-        # Obtém a URL gerada pelo Storage (Cloudinary URL em produção)
-        def get_photo_url():
-            try:
-                return car.photo.url
-            except Exception:
-                return None
-        
-        photo_url = await sync_to_async(get_photo_url)()
-        if not photo_url:
-            return True
-            
-        headers = {"User-Agent": "Mozilla/5.0"}
-        # Testa a URL com um request HEAD rápido
-        res = await http_client.head(photo_url, headers=headers, timeout=5, follow_redirects=True)
-        if res.status_code == 200:
-            return False  # Imagem existe e retornou sucesso
-    except Exception:
-        pass
-    return True  # Retorna True se a imagem não puder ser obtida ou retornar erro
+    if not photo_path_str:
+        return True
+
+    backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    local_file_path = os.path.join(backend_dir, photo_path_str.replace('/', os.sep))
+    return not os.path.exists(local_file_path)
 
 async def get_real_car_price_from_ai(brand, model, year):
     """
