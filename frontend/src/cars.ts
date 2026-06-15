@@ -67,6 +67,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     option.className = 'bg-brand-panel';
                     brandFilter.appendChild(option);
                 });
+                
+                // Restaurar marca selecionada
+                const savedBrand = sessionStorage.getItem('last_selected_brand');
+                if (savedBrand) {
+                    brandFilter.value = savedBrand;
+                }
             }
         } catch (err) {
             console.error('Erro ao buscar marcas:', err);
@@ -197,19 +203,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Inicialização
-    loadBrands();
+    const savedQuery = sessionStorage.getItem('last_search_query');
+    if (savedQuery && searchInput) {
+        searchInput.value = savedQuery;
+    }
+    
+    await loadBrands();
     loadCars(true);
 
     // Debounce para evitar sobrecarga de requisições ao digitar
     let searchTimeout: number;
     searchInput?.addEventListener('input', () => {
         clearTimeout(searchTimeout);
+        if (searchInput) {
+            sessionStorage.setItem('last_search_query', searchInput.value);
+        }
         searchTimeout = window.setTimeout(() => {
             loadCars(true);
         }, 400);
     });
 
     brandFilter?.addEventListener('change', () => {
+        if (brandFilter) {
+            sessionStorage.setItem('last_selected_brand', brandFilter.value);
+        }
         loadCars(true);
     });
 

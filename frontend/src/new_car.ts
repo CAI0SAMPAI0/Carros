@@ -79,9 +79,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (brandSelect && car.brand) brandSelect.value = car.brand.toString();
                 if (factoryYearInput && car.ano_fabricacao) factoryYearInput.value = car.ano_fabricacao.toString();
                 if (modelYearInput && car.ano_modelo) modelYearInput.value = car.ano_modelo.toString();
-                if (plateInput && car.placa) plateInput.value = car.placa;
+                if (plateInput) plateInput.value = car.placa || '';
                 if (valueInput && car.preco) valueInput.value = car.preco.toString();
                 if (bioInput && car.descricao) bioInput.value = car.descricao;
+
+                // Exibe imagem atual se houver
+                if (car.foto) {
+                    const previewContainer = document.getElementById('photo-preview-container');
+                    const previewImg = document.getElementById('photo-preview') as HTMLImageElement | null;
+                    if (previewContainer && previewImg) {
+                        const fotoUrl = car.foto.startsWith('http') ? car.foto : `${API_BASE_URL}${car.foto}`;
+                        previewImg.src = fotoUrl;
+                        previewContainer.style.display = 'block';
+                    }
+                }
             }
         } catch (err) {
             console.error('Erro ao carregar detalhes do carro para edição:', err);
@@ -94,10 +105,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         carForm.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            // Usando FormData para suportar envio de arquivo/imagem
             const formData = new FormData(carForm);
 
-            // Adicionar cabeçalho de autorização manual já que estamos usando fetch nativo para FormData
             const token = localStorage.getItem('auth_token');
             const headers: Record<string, string> = {};
             if (token) {
@@ -118,9 +127,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const result = await response.json().catch(() => ({}));
                 if (response.ok && result.success) {
                     showToast(isEditMode ? 'Carro atualizado com sucesso!' : 'Carro cadastrado com sucesso!', 'success');
-                    setTimeout(() => {
-                        window.location.href = '../cars/';
-                    }, 1500);
+                    if (isEditMode) {
+                        // Salva e continua na edição (recarrega para atualizar os dados, incluindo a imagem)
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
+                    } else {
+                        // Novo carro: redireciona para a garagem
+                        setTimeout(() => {
+                            window.location.href = '../cars/';
+                        }, 1500);
+                    }
                 } else {
                     const errorMsg = result.error || (result.errors ? JSON.stringify(result.errors) : 'Erro desconhecido');
                     showToast('Erro ao salvar carro: ' + errorMsg, 'error');
@@ -128,6 +145,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             } catch (err: any) {
                 showToast('Erro de conexão ao salvar carro: ' + err.message, 'error');
             }
+        });
+    }
+
+    // 5. Configurar botão cancelar
+    const cancelBtn = document.getElementById('btn-cancel');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => {
+            window.history.back();
         });
     }
 });

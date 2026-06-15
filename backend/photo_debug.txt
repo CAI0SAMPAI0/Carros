@@ -1,0 +1,51 @@
+Encontrados 174 carros com foto no banco.
+
+Carro ID: 15 - Ferrari Ferrari Portofino
+  photo field value: cars/ferrari_ferrari_portofino_2020.jpg
+  photo.name: cars/ferrari_ferrari_portofino_2020.jpg
+  photo.url: /media/cars/ferrari_ferrari_portofino_2020.jpg
+
+Carro ID: 16 - Ferrari Ferrari SF90 Stradale
+  photo field value: cars/ferrari_ferrari_sf90_stradale_2020.jpg
+  photo.name: cars/ferrari_ferrari_sf90_stradale_2020.jpg
+  photo.url: /media/cars/ferrari_ferrari_sf90_stradale_2020.jpg
+
+Carro ID: 35 - Maserati Ghibli
+  photo field value: cars/maserati_ghibli_2022.jpg
+  photo.name: cars/maserati_ghibli_2022.jpg
+  photo.url: /media/cars/maserati_ghibli_2022.jpg
+
+Carro ID: 25 - Lamborghini Urus
+  photo field value: cars/lamborghini_urus_2023.jpg
+  photo.name: cars/lamborghini_urus_2023.jpg
+  photo.url: /media/cars/lamborghini_urus_2023.jpg
+
+Carro ID: 27 - Lamborghini Sián
+  photo field value: cars/lamborghini_sián_2023.jpg
+  photo.name: cars/lamborghini_sián_2023.jpg
+  photo.url: /media/cars/lamborghini_si%C3%A1n_2023.jpg
+
+Carro ID: 34 - Maserati Levante
+  photo field value: cars/maserati_levante_2023.jpg
+  photo.name: cars/maserati_levante_2023.jpg
+  photo.url: /media/cars/maserati_levante_2023.jpg
+
+Carro ID: 32 - Lancia Ypsilon
+  photo field value: cars/lancia_ypsilon_2020.jpg
+  photo.name: cars/lancia_ypsilon_2020.jpg
+  photo.url: /media/cars/lancia_ypsilon_2020.jpg
+
+Carro ID: 39 - Pagani Huayra
+  photo field value: cars/pagani_huayra_2023.jpg
+  photo.name: cars/pagani_huayra_2023.jpg
+  photo.url: /media/cars/pagani_huayra_2023.jpg
+
+Carro ID: 14 - Ferrari Ferrari Roma
+  photo field value: cars/ferrari_ferrari_roma_2020.jpg
+  photo.name: cars/ferrari_ferrari_roma_2020.jpg
+  photo.url: /media/cars/ferrari_ferrari_roma_2020.jpg
+
+Carro ID: 19 - Fiat Fiat Palio
+  photo field value: cars/fiat_fiat_palio_2013_c2S9Uff.jpg
+  photo.name: cars/fiat_fiat_palio_2013_c2S9Uff.jpg
+  photo.url: /media/cars/fiat_fiat_palio_2013_c2S9Uff.jpg

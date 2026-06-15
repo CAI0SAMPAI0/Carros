@@ -103,7 +103,7 @@ def cars_api_list(request):
             photo_path = str(car.photo)
             if photo_path:
                 if cloud_name and not photo_path.startswith('http'):
-                    foto_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{photo_path}"
+                    foto_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/media/{photo_path}"
                 else:
                     try:
                         foto_url = car.photo.url
@@ -166,7 +166,7 @@ def car_detail_api(request, pk):
             photo_path = str(car.photo)
             if photo_path:
                 if cloud_name and not photo_path.startswith('http'):
-                    foto_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/{photo_path}"
+                    foto_url = f"https://res.cloudinary.com/{cloud_name}/image/upload/media/{photo_path}"
                 else:
                     try:
                         foto_url = car.photo.url

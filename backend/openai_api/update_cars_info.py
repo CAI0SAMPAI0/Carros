@@ -1,0 +1,334 @@
+import os
+import sys
+import json
+import re
+import asyncio
+import httpx
+from dotenv import load_dotenv
+from groq import AsyncGroq
+from django.core.files.base import ContentFile
+from asgiref.sync import sync_to_async
+
+# 1. Carregar variáveis de ambiente do diretório pai (.env) ANTES do django setup
+backend_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+dotenv_path = os.path.join(backend_path, '.env')
+load_dotenv(dotenv_path)
+
+# 2. Configurar o ambiente Django para o script rodar de forma independente
+if backend_path not in sys.path:
+    sys.path.append(backend_path)
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'app.settings')
+import django
+django.setup()
+
+# Agora podemos importar os modelos do Django com segurança
+from cars.models import Car
+
+# 3. Validar chaves de API e inicializar cliente Groq assíncrono
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+
+if not GROQ_API_KEY:
+    print("[Erro] A variável de ambiente GROQ_API_KEY não foi encontrada no arquivo .env.")
+    sys.exit(1)
+
+client = AsyncGroq(api_key=GROQ_API_KEY)
+# Semáforo para controlar concorrência (mantido baixo para evitar sobrecarga local)
+SEMAPHORE = asyncio.Semaphore(2)
+# Bloqueio assíncrono para garantir que apenas um request de preço rode por vez no intervalo de tempo
+GROQ_LOCK = asyncio.Lock()
+
+def clean_string(s):
+    """
+    Remove caracteres invisíveis e de marcação de ordem de byte (BOM - \ufeff)
+    que causam duplicidade e quebra nas buscas de APIs.
+    """
+    if not s:
+        return ""
+    s = s.replace('\ufeff', '').replace('\u200b', '').replace('\u200c', '').replace('\u200d', '')
+    return s.strip()
+
+def get_full_car_name(brand, model):
+    """
+    Retorna o nome completo do carro sem duplicar a marca caso o modelo já comece com ela.
+    """
+    b = clean_string(brand)
+    m = clean_string(model)
+    if m.lower().startswith(b.lower()):
+        return m
+    return f"{b} {m}"
+
+def parse_price_string(price_str):
+    """
+    Trata qualquer formato de preço (brasileiro ou internacional, com pontos e vírgulas)
+    e converte de forma segura para float.
+    """
+    price_str = re.sub(r'[^\d.,]', '', price_str)
+    if not price_str:
+        return None
+        
+    if ',' in price_str and '.' in price_str:
+        if price_str.rfind(',') > price_str.rfind('.'):
+            price_str = price_str.replace('.', '').replace(',', '.')
+        else:
+            price_str = price_str.replace(',', '')
+    elif ',' in price_str:
+        parts = price_str.split(',')
+        if len(parts[-1]) in [1, 2]:
+            price_str = "".join(parts[:-1]) + "." + parts[-1]
+        else:
+            price_str = "".join(parts)
+    elif '.' in price_str:
+        parts = price_str.split('.')
+        if len(parts[-1]) in [1, 2]:
+            price_str = "".join(parts[:-1]) + "." + parts[-1]
+        else:
+            price_str = "".join(parts)
+            
+    try:
+        return float(price_str)
+    except ValueError:
+        return None
+
+async def is_car_photo_broken(http_client, car):
+    """
+    Verifica se a foto atual do carro no banco é válida.
+    Se for um caminho local, verifica se o arquivo existe fisicamente.
+    Se for um link externo ou Cloudinary, faz um request HEAD rápido.
+    """
+    if not car.photo:
+        return True
+    
+    photo_path_str = str(car.photo)
+    if photo_path_str and not photo_path_str.startswith('http'):
+        # Verifica se o arquivo existe localmente na pasta backend/images ou backend/media
+        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        local_file_path = os.path.join(backend_dir, photo_path_str.replace('/', os.sep))
+        if os.path.exists(local_file_path):
+            return False  # O arquivo existe localmente
+            
+    try:
+        # Obtém a URL gerada pelo Storage (Cloudinary URL em produção)
+        def get_photo_url():
+            try:
+                return car.photo.url
+            except Exception:
+                return None
+        
+        photo_url = await sync_to_async(get_photo_url)()
+        if not photo_url:
+            return True
+            
+        headers = {"User-Agent": "Mozilla/5.0"}
+        # Testa a URL com um request HEAD rápido
+        res = await http_client.head(photo_url, headers=headers, timeout=5, follow_redirects=True)
+        if res.status_code == 200:
+            return False  # Imagem existe e retornou sucesso
+    except Exception:
+        pass
+    return True  # Retorna True se a imagem não puder ser obtida ou retornar erro
+
+async def get_real_car_price_from_ai(brand, model, year):
+    """
+    Usa o modelo da Groq de forma assíncrona para obter o preço real (Tabela FIPE) no Brasil.
+    Garante um espaçamento de no mínimo 2.2 segundos entre chamadas para respeitar o limite de 30 RPM.
+    """
+    full_name = get_full_car_name(brand, model)
+    
+    prompt = f"""
+    Você é um especialista em preços de automóveis no Brasil.
+    Qual é o valor médio real de mercado ou Tabela FIPE no Brasil (em Reais) para o carro: {full_name} ano {year or 'recente'}?
+    Retorne a resposta estritamente no formato JSON abaixo:
+    {{
+      "preco": 150000.00
+    }}
+    NÃO adicione nenhuma outra explicação, texto ou formatação Markdown fora do bloco JSON.
+    """
+    
+    async with GROQ_LOCK:
+        for attempt in range(5):
+            try:
+                response = await client.chat.completions.create(
+                    model="llama-3.1-8b-instant",
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=80,
+                    temperature=0.1,
+                    response_format={"type": "json_object"}
+                )
+                # Espaçamento estrito para evitar bater 30 RPM
+                await asyncio.sleep(2.2)
+                
+                content = response.choices[0].message.content.strip()
+                data = json.loads(content)
+                raw_preco = data.get("preco", 0)
+                
+                if isinstance(raw_preco, str):
+                    return parse_price_string(raw_preco)
+                return float(raw_preco)
+            except Exception as e:
+                err_str = str(e)
+                if "rate_limit" in err_str.lower() or "429" in err_str:
+                    wait_time = 4 + attempt * 4
+                    print(f"   [Rate Limit] Limite atingido para {full_name}. Aguardando {wait_time}s...")
+                    await asyncio.sleep(wait_time)
+                else:
+                    print(f"   [Erro AI Preço] Falha ao obter preço para {full_name}: {e}")
+                    await asyncio.sleep(2.2)
+                    break
+    return None
+
+async def get_car_image_url(http_client, make, model, year):
+    """
+    Busca uma imagem do carro no Wikimedia Commons de forma assíncrona.
+    Utiliza gsrnamespace: 6 para garantir que apenas arquivos de mídia (File) sejam pesquisados.
+    """
+    make_clean = clean_string(make)
+    model_clean = clean_string(model)
+    full_name = get_full_car_name(make, model)
+    
+    queries_to_try = [
+        full_name,
+        f"{make_clean} {model_clean.split()[0]}",
+        model_clean
+    ]
+    
+    headers = {"User-Agent": "CarrosBot/1.0 (cmsampaio71@gmail.com)"}
+    search_url = "https://commons.wikimedia.org/w/api.php"
+    
+    for query in queries_to_try:
+        query = query.strip()
+        if not query:
+            continue
+            
+        search_params = {
+            "action": "query",
+            "generator": "search",
+            "gsrsearch": query,
+            "gsrnamespace": 6,
+            "gsrlimit": 5,
+            "prop": "imageinfo",
+            "iiprop": "url",
+            "iiurlwidth": 1000,
+            "format": "json"
+        }
+        
+        try:
+            await asyncio.sleep(0.2)
+            res = await http_client.get(search_url, params=search_params, headers=headers, timeout=10)
+            if res.status_code == 200:
+                data = res.json()
+                pages = data.get("query", {}).get("pages", {})
+                if pages:
+                    pages_list = list(pages.values())
+                    pages_list.sort(key=lambda x: x.get("index", 999))
+                    
+                    for page_data in pages_list:
+                        title = page_data.get("title", "").lower()
+                        if "imageinfo" in page_data:
+                            image_info = page_data["imageinfo"][0]
+                            url = image_info.get("thumburl") or image_info.get("url")
+                            
+                            url_lower = url.lower()
+                            if any(url_lower.endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.webp']):
+                                if not any(x in url_lower or x in title for x in ["logo", "emblem", "badge", "drawing", "diagram", "interior", "sign"]):
+                                    return url
+        except Exception:
+            pass
+            
+    return None
+
+async def download_and_save_image(http_client, car_obj, image_url):
+    """
+    Baixa a imagem, salva localmente na pasta backend/images e salva o caminho relativo no Supabase.
+    """
+    if not image_url:
+        return False
+        
+    try:
+        headers = {"User-Agent": "CarrosBot/1.0 (cmsampaio71@gmail.com)"}
+        response = await http_client.get(image_url, headers=headers, timeout=15, follow_redirects=True)
+        if response.status_code == 200:
+            brand_clean = clean_string(car_obj.brand.name)
+            model_clean = clean_string(car_obj.model)
+            file_name = f"{brand_clean}_{model_clean}_{car_obj.model_year or 'unknown'}.jpg".replace(" ", "_").lower()
+            
+            backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            images_dir = os.path.join(backend_dir, 'images')
+            os.makedirs(images_dir, exist_ok=True)
+            
+            local_path = os.path.join(images_dir, file_name)
+            
+            # Salva localmente
+            with open(local_path, 'wb') as f:
+                f.write(response.content)
+            
+            # Salva o caminho relativo no banco de dados (Supabase)
+            def save_to_db():
+                car_obj.photo = f"images/{file_name}"
+                car_obj.save()
+            
+            await sync_to_async(save_to_db)()
+            return True
+        else:
+            print(f"   [Download Falhou] HTTP {response.status_code} para URL: {image_url}")
+    except Exception as e:
+        print(f"   [Erro Mídia] Exceção ao baixar/salvar imagem de {car_obj.model}: {e}")
+    return False
+
+async def process_single_car(http_client, car):
+    """
+    Processa um único carro respeitando o semáforo.
+    """
+    brand_clean = clean_string(car.brand.name)
+    model_clean = clean_string(car.model)
+    full_name = get_full_car_name(car.brand.name, car.model)
+    
+    async with SEMAPHORE:
+        print(f"[Iniciando] {full_name} ({car.model_year})")
+        
+        # 1. Obter e atualizar o preço médio real
+        real_value = await get_real_car_price_from_ai(car.brand.name, car.model, car.model_year)
+        if real_value:
+            def update_value():
+                car.value = real_value
+                car.save()
+            await sync_to_async(update_value)()
+            print(f"   [Preço Atualizado] {full_name}: R$ {real_value:,.2f}")
+        else:
+            print(f"   [Preço Ignorado] {full_name} não atualizado.")
+        
+        # 2. Obter e atualizar a imagem se a foto atual estiver quebrada (ou se não houver foto)
+        photo_broken = await is_car_photo_broken(http_client, car)
+        if photo_broken:
+            print(f"   [Verificação] Imagem ausente ou quebrada no Cloudinary. Buscando nova foto...")
+            image_url = await get_car_image_url(http_client, car.brand.name, car.model, car.model_year)
+            if image_url:
+                success = await download_and_save_image(http_client, car, image_url)
+                if success:
+                    print(f"   [Imagem Atualizada] {full_name} com nova foto.")
+                else:
+                    print(f"   [Imagem Falhou] Não foi possível salvar a imagem.")
+            else:
+                print(f"   [Imagem Não Encontrada] Nenhuma foto encontrada para {full_name}.")
+        else:
+            print(f"   [Imagem Preservada] {full_name} já possui uma foto válida no Cloudinary.")
+            
+        print(f"[Concluído] {full_name}")
+        print("-" * 50)
+
+async def main():
+    def get_all_cars():
+        return list(Car.objects.select_related('brand').all())
+    
+    cars = await sync_to_async(get_all_cars)()
+    total_cars = len(cars)
+    print(f"Iniciando processamento assíncrono de {total_cars} carros cadastrados no banco de dados...\n")
+    
+    async with httpx.AsyncClient() as http_client:
+        tasks = [process_single_car(http_client, car) for car in cars]
+        await asyncio.gather(*tasks)
+
+    print("\nProcessamento assíncrono concluído com sucesso!")
+
+if __name__ == '__main__':
+    asyncio.run(main())

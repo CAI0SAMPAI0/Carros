@@ -105,15 +105,14 @@ def get_car_models_from_ai(brand_name, num_cars=5):
     Você é um especialista em automóveis. Forneça uma lista com {num_cars} modelos de carros populares ou conhecidos da marca '{brand_name}' no Brasil.
     Para cada carro, você deve fornecer as seguintes informações exatas em formato JSON:
     - "model": Nome do modelo (ex: "Civic", "Corolla", "M3")
-    - "value": Valor aproximado em Reais (Float, ex: 150000.0)
+    - "value": Valor de mercado real ou Tabela FIPE aproximado em Reais no Brasil (Float, ex: 150000.0). NÃO subestime preços de veículos de luxo ou importados (ex: Porsche, Ferrari, BMW, Mercedes-Benz, Land Rover devem refletir os valores reais de mercado, como 400000.0, 600000.0, ou mais).
     - "factory_year": Ano de fabricação aproximado (Integer, ex: 2022)
     - "model_year": Ano do modelo aproximado (Integer, ex: 2023)
-    - "bio": Uma breve descrição de venda do carro em no máximo 200 caracteres, destacando seus principais atrativos.
 
     Retorne APENAS um array JSON válido contendo os objetos de carros, sem nenhuma outra explicação ou formatação Markdown fora do bloco JSON.
     Exemplo de formato esperado:
     [
-      {{"model": "Exemplo", "value": 120000.0, "factory_year": 2022, "model_year": 2023, "bio": "Excelente carro."}}
+      {{"model": "Exemplo", "value": 120000.0, "factory_year": 2022, "model_year": 2023}}
     ]
     """
 
@@ -204,7 +203,6 @@ def main():
                         'value': car_data.get("value"),
                         'factory_year': car_data.get("factory_year"),
                         'model_year': car_data.get("model_year"),
-                        'bio': car_data.get("bio", "")
                     }
                 )
                 

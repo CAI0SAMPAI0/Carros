@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // 2. Elementos do DOM
+    const backLink = document.getElementById('back-link');
     const photoContainer = document.getElementById('car-photo-container');
     const brandTag = document.getElementById('car-brand-tag');
     const modelTitle = document.getElementById('car-model-title');
@@ -39,6 +40,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const specPlate = document.getElementById('spec-plate');
     const btnEdit = document.getElementById('btn-edit');
     const btnDelete = document.getElementById('btn-delete');
+
+    if (backLink) {
+        backLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.history.back();
+        });
+    }
 
     // 3. Buscar detalhes do carro
     try {
