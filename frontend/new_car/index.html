@@ -26,7 +26,14 @@
 
     <!-- CONTENT -->
     <main style="padding: 2rem 1rem; display: flex; justify-content: center; align-items: center;">
-        <div class="form-card" style="max-width: 700px; width: 100%; margin: 2rem auto;">
+        <div style="max-width: 700px; width: 100%; margin: 2rem auto;">
+            <button id="btn-back-top" onclick="window.history.back()" style="display: inline-flex; align-items: center; gap: 0.5rem; background: none; border: none; color: var(--text-dim); font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; padding: 0.4rem 0; margin-bottom: 1rem; transition: color 0.2s;" onmouseover="this.style.color='var(--text-hi)'" onmouseout="this.style.color='var(--text-dim)'">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"/>
+                </svg>
+                Voltar
+            </button>
+        <div class="form-card">
             <h2 id="page-title">Cadastrar Veículo</h2>
             <p id="page-subtitle" class="form-subtitle">Adicione um novo carro ao inventário</p>
             
@@ -84,6 +91,7 @@
                     <button type="button" id="btn-cancel" class="btn btn-ghost" style="flex: 1; justify-content: center; text-align: center;">Cancelar</button>
                 </div>
             </form>
+        </div>
         </div>
     </main>
 

@@ -81,8 +81,12 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Inclui a pasta images/ como arquivos estáticos — servidos pelo WhiteNoise em produção
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'images'),
+]
 
-# Media files — servidos localmente da pasta backend/images/
+# Media files (usado apenas localmente via Django dev server)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR
 

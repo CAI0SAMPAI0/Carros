@@ -104,7 +104,9 @@ def cars_api_list(request):
                 if photo_path.startswith('http'):
                     foto_url = photo_path
                 else:
-                    foto_url = f"{settings.MEDIA_URL}{photo_path}"
+                    # Imagens em images/ são servidas como arquivos estáticos pelo WhiteNoise
+                    filename = photo_path.split('/')[-1]
+                    foto_url = f"{settings.STATIC_URL}{filename}"
                 
         data.append({
             'id': car.id,
@@ -163,7 +165,9 @@ def car_detail_api(request, pk):
                 if photo_path.startswith('http'):
                     foto_url = photo_path
                 else:
-                    foto_url = f"{settings.MEDIA_URL}{photo_path}"
+                    # Imagens em images/ são servidas como arquivos estáticos pelo WhiteNoise
+                    filename = photo_path.split('/')[-1]
+                    foto_url = f"{settings.STATIC_URL}{filename}"
 
         return JsonResponse({
             'id': car.id,
