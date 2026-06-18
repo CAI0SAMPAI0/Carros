@@ -2,10 +2,12 @@ import os
 import hashlib
 import requests
 from django.core.files.base import ContentFile
+from django.db.models.signals import post_save
 
 def get_existing_photo_hashes():
     """
-    Computes and returns a set of MD5 hashes of all existing valid car photos.
+    Calcula e retorna um conjunto de hashes MD5 de todas as fotos de carros válidas existentes.
+    Ignora silenciosamente arquivos inexistentes (comum após novas implantações na Render).
     """
     hashes = set()
     from cars.models import Car
@@ -18,13 +20,16 @@ def get_existing_photo_hashes():
                 if content:
                     file_hash = hashlib.md5(content).hexdigest()
                     hashes.add(file_hash)
+        except FileNotFoundError:
+            # Ignora silenciosamente arquivos que não existem no disco local
+            pass
         except Exception as e:
-            print(f"Error hashing photo for car {car.id}: {e}")
+            print(f"Erro ao calcular hash para o carro {car.id}: {e}")
     return hashes
 
 def fetch_and_save_car_photo_with_hashes(car_id, existing_hashes):
     """
-    Internal photo search and download function that reuses a set of existing photo hashes.
+    Função interna para buscar e baixar fotos reutilizando o conjunto de hashes fornecido.
     """
     from cars.models import Car
     try:
@@ -90,12 +95,12 @@ def fetch_and_save_car_photo_with_hashes(car_id, existing_hashes):
                                             img_hash = hashlib.md5(img_content).hexdigest()
                                             
                                             if img_hash in existing_hashes:
-                                                print(f"   [Duplicate Detected] Hash {img_hash} already exists. Skipping URL: {url}")
+                                                print(f"   [Foto Duplicada] Hash {img_hash} já cadastrado. Pulando URL: {url}")
                                                 continue
                                             
                                             file_name = f"{brand_name}_{model_name}_{year}.jpg".replace(" ", "_").lower()
                                             car.photo.save(file_name, ContentFile(img_content), save=True)
-                                            print(f"   [Success] Saved unique image for {brand_name} {model_name} from: {url}")
+                                            print(f"   [Sucesso] Imagem única salva para {brand_name} {model_name} da URL: {url}")
                                             
                                             existing_hashes.add(img_hash)
                                             
@@ -106,65 +111,75 @@ def fetch_and_save_car_photo_with_hashes(car_id, existing_hashes):
                                                 pass
                                             return
                                     except Exception as e:
-                                        print(f"Error downloading/checking image from {url}: {e}")
+                                        print(f"Erro ao baixar/validar imagem de {url}: {e}")
         except Exception as e:
-            print(f"Error during Wikimedia request for query '{query}': {e}")
+            print(f"Erro na requisição ao Wikimedia para a busca '{query}': {e}")
 
 def fetch_and_save_car_photo(car_id):
     """
-    Fetch image wrapper that retrieves the full set of hashes and requests a unique image.
+    Wrapper para buscar fotos que recalcula os hashes de forma independente (usado por sinais individuais).
     """
     existing_hashes = get_existing_photo_hashes()
     fetch_and_save_car_photo_with_hashes(car_id, existing_hashes)
 
 def fix_all_photos():
     """
-    Identifies all duplicate or broken photos in the database and updates them automatically.
+    Varre todos os carros, identifica duplicatas ou imagens quebradas/inexistentes,
+    e baixa novas fotos exclusivas em segundo plano.
     """
+    # Desconecta temporariamente o sinal do post_save para evitar loop de threads em cascata
+    from cars.signals import car_post_save
     from cars.models import Car
+    
+    post_save.disconnect(car_post_save, sender=Car)
+    
     try:
         cars = list(Car.objects.select_related('brand').all())
-    except Exception as e:
-        print(f"[Photo Cleanup Error] Could not list cars: {e}")
-        return
-    
-    seen_hashes = {}
-    duplicates = []
-    broken_or_missing = []
-    
-    print(f"[Photo Cleanup] Scanning {len(cars)} cars in database for duplicates and missing photos...")
-    
-    for car in cars:
-        if car.photo:
-            try:
-                car.photo.open('rb')
-                content = car.photo.read()
-                car.photo.close()
-                if content:
-                    img_hash = hashlib.md5(content).hexdigest()
-                    if img_hash in seen_hashes:
-                        duplicates.append(car)
+        
+        seen_hashes = {}
+        duplicates = []
+        broken_or_missing = []
+        
+        print(f"[Photo Cleanup] Iniciando varredura em {len(cars)} carros no banco de dados...")
+        
+        for car in cars:
+            if car.photo:
+                try:
+                    car.photo.open('rb')
+                    content = car.photo.read()
+                    car.photo.close()
+                    if content:
+                        img_hash = hashlib.md5(content).hexdigest()
+                        if img_hash in seen_hashes:
+                            duplicates.append(car)
+                        else:
+                            seen_hashes[img_hash] = car.id
                     else:
-                        seen_hashes[img_hash] = car.id
-                else:
+                        broken_or_missing.append(car)
+                except FileNotFoundError:
                     broken_or_missing.append(car)
-            except Exception:
+                except Exception:
+                    broken_or_missing.append(car)
+            else:
                 broken_or_missing.append(car)
-        else:
-            broken_or_missing.append(car)
 
-    existing_hashes = set(seen_hashes.keys())
-    to_fix = duplicates + broken_or_missing
-    if not to_fix:
-        print("[Photo Cleanup] All cars have unique, valid photos. Nothing to do!")
-        return
+        existing_hashes = set(seen_hashes.keys())
+        to_fix = duplicates + broken_or_missing
+        if not to_fix:
+            print("[Photo Cleanup] Todos os carros possuem fotos válidas e exclusivas. Nada a fazer!")
+            return
+            
+        print(f"[Photo Cleanup] Encontrados {len(duplicates)} carros duplicados e {len(broken_or_missing)} sem fotos ou com imagens quebradas.")
         
-    print(f"[Photo Cleanup] Found {len(duplicates)} duplicate photos and {len(broken_or_missing)} missing/broken photos to repair.")
-    
-    for car in to_fix:
-        print(f"[Photo Cleanup] Repairing photo for {car.brand.name} {car.model} ({car.model_year or 'unknown'})...")
-        car.photo = None
-        car.save()
-        fetch_and_save_car_photo_with_hashes(car.id, existing_hashes)
-        
-    print("[Photo Cleanup] Finished photo scanning and repairs successfully!")
+        for car in to_fix:
+            print(f"[Photo Cleanup] Reparando foto de {car.brand.name} {car.model} ({car.model_year or 'unknown'})...")
+            car.photo = None
+            car.save()
+            fetch_and_save_car_photo_with_hashes(car.id, existing_hashes)
+            
+        print("[Photo Cleanup] Varredura e reparos de fotos finalizados com sucesso!")
+    except Exception as e:
+        print(f"[Photo Cleanup Error] Ocorreu um erro no processo de reparo: {e}")
+    finally:
+        # Reconecta o sinal do Django sempre ao finalizar
+        post_save.connect(car_post_save, sender=Car)
