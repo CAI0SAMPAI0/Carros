@@ -199,6 +199,7 @@ def fix_all_photos():
     """
     from cars.signals import car_post_save
     from cars.models import Car
+    from django.conf import settings
 
     post_save.disconnect(car_post_save, sender=Car)
 
@@ -211,28 +212,38 @@ def fix_all_photos():
 
         print(f"[{datetime.now()}] [Photo Cleanup] Iniciando varredura em {len(cars)} carros no banco de dados...")
 
+        is_cloudinary = getattr(settings, 'DEFAULT_FILE_STORAGE', '') == 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
         for car in cars:
             if car.photo:
-                try:
-                    car.photo.open('rb')
-                    content = car.photo.read()
-                    car.photo.close()
-                    if content:
-                        img_hash = hashlib.md5(content).hexdigest()
-                        if img_hash in seen_hashes:
-                            duplicates.append(car)
-                        else:
-                            seen_hashes[img_hash] = car.id
+                if is_cloudinary:
+                    # Se estiver usando Cloudinary, assumimos que se a foto está cadastrada no banco, ela existe na nuvem.
+                    # Isso evita baixar centenas de imagens a cada boot da imagem docker na nuvem.
+                    if car.photo.name in seen_hashes:
+                        duplicates.append(car)
                     else:
+                        seen_hashes[car.photo.name] = car.id
+                else:
+                    try:
+                        car.photo.open('rb')
+                        content = car.photo.read()
+                        car.photo.close()
+                        if content:
+                            img_hash = hashlib.md5(content).hexdigest()
+                            if img_hash in seen_hashes:
+                                duplicates.append(car)
+                            else:
+                                seen_hashes[img_hash] = car.id
+                        else:
+                            broken_or_missing.append(car)
+                    except FileNotFoundError:
                         broken_or_missing.append(car)
-                except FileNotFoundError:
-                    broken_or_missing.append(car)
-                except Exception:
-                    broken_or_missing.append(car)
+                    except Exception:
+                        broken_or_missing.append(car)
             else:
                 broken_or_missing.append(car)
 
-        existing_hashes = set(seen_hashes.keys())
+        existing_hashes = set(seen_hashes.keys()) if not is_cloudinary else set()
         to_fix = duplicates + broken_or_missing
 
         if not to_fix:
@@ -253,3 +264,11 @@ def fix_all_photos():
         print(f"[{datetime.now()}] [Photo Cleanup Error] Ocorreu um erro no processo de reparo: {e}")
     finally:
         post_save.connect(car_post_save, sender=Car)
+        # Remove o arquivo de lock ao finalizar o processamento
+        import tempfile
+        lock_path = os.path.join(tempfile.gettempdir(), 'photo_cleanup.lock')
+        try:
+            os.remove(lock_path)
+        except OSError:
+            pass
+
