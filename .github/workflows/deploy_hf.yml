@@ -40,9 +40,10 @@ jobs:
 
       - name: Commit Changes
         run: |
+          # Força a re-normalização de todas as imagens para ponteiros LFS
+          git add --renormalize .
           git add -A
-          # Comita apenas se houver diferenças (geralmente haverá por remover as pastas do rastreamento)
-          git diff-index --quiet HEAD || git commit -m "Deploy: Django Backend (Clean backend-only build via GitHub Actions)"
+          git commit -m "Deploy: Django Backend (LFS converted via GitHub Actions)"
 
       - name: Push to Hugging Face Spaces
         env:
