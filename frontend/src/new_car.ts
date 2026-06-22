@@ -1,6 +1,7 @@
 import { apiFetch } from './api';
 import { API_BASE_URL } from './config';
 import { showToast } from './toast';
+import { t, setupLanguageToggle, getLanguage } from './i18n';
 
 interface Brand {
     id: number;
@@ -55,12 +56,38 @@ function formatCurrency(val: number, currencyCode: string): string {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Verificar autenticação e cotação
-    await fetchExchangeRate();
+    // setup i18n
+    setupLanguageToggle();
+
+    // 1. Checar se usuário está logado e traduzir navbar
     const username = localStorage.getItem('username');
+    const authContainer = document.getElementById('auth-container');
+
+    if (authContainer) {
+        if (username) {
+            authContainer.innerHTML = `
+                <li class="nav-greeting">${getLanguage() === 'pt' ? 'Olá' : 'Hello'}, ${username}!</li>
+                <li class="nav-btn-red"><a href="../new_car/">${t('add_car')}</a></li>
+                <li><a href="../cars/">${t('garagem')}</a></li>
+                <li><button id="logout-btn">${t('logout')}</button></li>
+            `;
+            document.getElementById('logout-btn')?.addEventListener('click', () => {
+                localStorage.removeItem('username');
+                localStorage.removeItem('auth_token');
+                window.location.reload();
+            });
+        } else {
+            authContainer.innerHTML = `
+                <li><a href="../login/">${t('login')}</a></li>
+                <li><a href="../register/">${t('register')}</a></li>
+            `;
+        }
+    }
+
+    await fetchExchangeRate();
     let lastCurrency = 'BRL';
     if (!username) {
-        showToast('Você precisa estar logado para acessar esta página.', 'error');
+        showToast(t('toast_auth_required'), 'error');
         setTimeout(() => {
             window.location.href = '../login/';
         }, 1500);
@@ -82,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const brands = await apiFetch<Brand[]>('/api/v1/brands/');
         if (brands && brandSelect) {
-            brandSelect.innerHTML = '<option value="" class="bg-brand-panel">Selecione uma marca</option>';
+            brandSelect.innerHTML = `<option value="" class="bg-brand-panel">${getLanguage() === 'pt' ? 'Selecione uma marca' : 'Select a brand'}</option>`;
             brands.forEach(brand => {
                 const option = document.createElement('option');
                 option.value = brand.id.toString();
@@ -95,9 +122,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Erro ao carregar marcas:', err);
     }
 
+    // Tradução estática dos labels do formulário
+    const formLabels = document.querySelectorAll('#car-form label');
+    if (formLabels.length >= 8) {
+        formLabels[0].childNodes[0].textContent = t('label_brand') + ' ';
+        formLabels[1].childNodes[0].textContent = t('label_model') + ' ';
+        formLabels[2].childNodes[0].textContent = t('label_factory_year') + ' ';
+        formLabels[3].childNodes[0].textContent = t('label_model_year') + ' ';
+        formLabels[4].childNodes[0].textContent = t('label_plate') + ' ';
+        formLabels[5].childNodes[0].textContent = t('label_value') + ' ';
+        formLabels[6].childNodes[0].textContent = t('label_currency') + ' ';
+        formLabels[7].childNodes[0].textContent = t('label_photo') + ' ';
+    }
+    
+    const formFieldDesc = document.querySelector('label[for="desc"]');
+    if (formFieldDesc) formFieldDesc.childNodes[0].textContent = t('label_desc');
+
+    const formFieldCat = document.querySelector('label[for="categoria"]');
+    if (formFieldCat) formFieldCat.childNodes[0].textContent = t('label_category');
+
+    const modelInput = document.getElementById('model') as HTMLInputElement | null;
+    if (modelInput) modelInput.placeholder = t('placeholder_model');
+
+    const plateInput = document.getElementById('plate') as HTMLInputElement | null;
+    if (plateInput) plateInput.placeholder = t('placeholder_plate');
+
+    const valueInput = document.getElementById('value') as HTMLInputElement | null;
+    if (valueInput) valueInput.placeholder = t('placeholder_value');
+
+    if (pageTitle && !isEditMode) pageTitle.textContent = t('new_car_title');
+    if (submitBtn) submitBtn.textContent = t('btn_save');
+
     // 3. Se for modo edição, carregar os dados do carro e preencher o formulário
     if (isEditMode && carId) {
-        if (pageTitle) pageTitle.textContent = 'Editar Veículo';
+        if (pageTitle) pageTitle.textContent = t('edit_car_title');
         if (pageSub) pageSub.textContent = 'Atualize as informações do automóvel';
         if (submitBtn) submitBtn.textContent = 'Salvar Alterações';
 
@@ -139,10 +197,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         } catch (err) {
-            console.error('Erro ao carregar detalhes do carro para edição:', err);
-            showToast('Não foi possível carregar os dados do carro.', 'error');
+                console.error('Erro ao carregar detalhes do carro para edição:', err);
+                showToast(
+                    getLanguage() === 'pt' 
+                        ? 'Não foi possível carregar os dados do carro.' 
+                        : 'Could not load vehicle details.', 
+                    'error'
+                );
+            }
         }
-    }
 
     // 4. Submissão do formulário (Criação ou Edição)
     if (carForm) {
@@ -183,7 +246,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const result = await response.json().catch(() => ({}));
                 if (response.ok && result.success) {
-                    showToast(isEditMode ? 'Carro atualizado com sucesso!' : 'Carro cadastrado com sucesso!', 'success');
+                    showToast(isEditMode ? t('toast_success_update') : t('toast_success_create'), 'success');
                     if (isEditMode) {
                         // Salva e continua na edição (recarrega para atualizar os dados, incluindo a imagem)
                         setTimeout(() => {
@@ -197,10 +260,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 } else {
                     const errorMsg = result.error || (result.errors ? JSON.stringify(result.errors) : 'Erro desconhecido');
-                    showToast('Erro ao salvar carro: ' + errorMsg, 'error');
+                    showToast((getLanguage() === 'pt' ? 'Erro ao salvar carro: ' : 'Error saving vehicle: ') + errorMsg, 'error');
                 }
             } catch (err: any) {
-                showToast('Erro de conexão ao salvar carro: ' + err.message, 'error');
+                showToast((getLanguage() === 'pt' ? 'Erro de conexão ao salvar carro: ' : 'Connection error saving vehicle: ') + err.message, 'error');
             }
         });
     }
@@ -208,8 +271,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // ── Configurar Máscaras de Entrada ──────────────────────────
     const factoryYearInput = document.getElementById('factory_year') as HTMLInputElement | null;
     const modelYearInput = document.getElementById('model_year') as HTMLInputElement | null;
-    const plateInput = document.getElementById('plate') as HTMLInputElement | null;
-    const valueInput = document.getElementById('value') as HTMLInputElement | null;
     const currencySelect = document.getElementById('currency') as HTMLSelectElement | null;
 
     const setupYearMask = (input: HTMLInputElement) => {

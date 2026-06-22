@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AutoDrive - Detalhes do Carro</title>
     <link rel="icon" type="image/png" href="/autodrive_logo.png">
+    <link rel="manifest" href="/manifest.json">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -65,6 +66,14 @@
                     </div>
                 </div>
                 
+                <!-- Structured Specs Sheet (IA) -->
+                <div class="specs-card" id="tech-specs-card" style="margin-top: 1.5rem; display: none;">
+                    <div class="specs-title" id="tech-specs-title">Ficha Técnica Detalhada (IA)</div>
+                    <div id="tech-specs-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem 1.5rem; margin-top: 1rem;">
+                        <!-- Injected here -->
+                    </div>
+                </div>
+                
                 <div id="car-bio-card" class="bio-card" style="display: none;">
                     <div class="bio-title">Descrição</div>
                     <p id="car-bio" class="bio-text"></p>
@@ -95,6 +104,34 @@
                         <span id="sim-result-value" class="spec-value" style="font-weight: 700; color: var(--gold); font-size: 1.15rem;">R$ 0,00</span>
                     </div>
                     <div style="font-size: 0.7rem; color: var(--muted); text-align: right; margin-top: 0.25rem;">Taxa est. de 1.5% a.m.</div>
+                </div>
+
+                <!-- Price Alert Card -->
+                <div class="specs-card" id="price-alert-card" style="margin-top: 1.5rem;">
+                    <div class="specs-title" id="price-alert-title">Alerta de Redução de Preço</div>
+                    <div id="price-alert-subtitle" style="font-size: 0.8rem; color: var(--text-dim); margin-top: 0.5rem; margin-bottom: 0.75rem;">
+                        Quer ser avisado por e-mail se o preço deste veículo cair?
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="email" id="alert-email" placeholder="seu-email@dominio.com" style="flex: 1; background: var(--dark); border: 1px solid var(--border); color: var(--text-hi); padding: 0.5rem; border-radius: 4px; font-size: 0.85rem;">
+                        <button id="btn-submit-alert" class="btn btn-primary" style="padding: 0.5rem 1rem; min-width: 0; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 0.25rem;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
+                            </svg>
+                            <span id="btn-submit-alert-label">Ativar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Depreciation Card -->
+                <div class="specs-card" id="depreciation-card" style="margin-top: 1.5rem; display: none;">
+                    <div class="specs-title" id="depreciation-title">Histórico de Depreciação (FIPE)</div>
+                    <div id="depreciation-chart-container" style="margin-top: 1rem; width: 100%; height: 200px;">
+                        <!-- SVG chart injected here -->
+                    </div>
+                    <div style="font-size: 0.65rem; color: var(--muted); text-align: center; margin-top: 0.5rem;" id="depreciation-subtitle">
+                        Estimativa baseada na desvalorização média anual do modelo.
+                    </div>
                 </div>
 
                 <div class="whatsapp-btn-container" id="whatsapp-btn-container" style="display: none; margin-top: 1.5rem;">
@@ -139,6 +176,7 @@
 
     <!-- Scripts -->
     <script type="module" src="/src/car_detail.ts"></script>
+    <script type="module" src="/src/chatbot.ts"></script>
 
 </body>
 </html>

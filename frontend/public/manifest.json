@@ -1,0 +1,16 @@
+{
+  "short_name": "AutoDrive",
+  "name": "AutoDrive - Veículos",
+  "icons": [
+    {
+      "src": "/autodrive_logo.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/cars/index.html",
+  "background_color": "#0B0C10",
+  "theme_color": "#C5A880",
+  "display": "standalone",
+  "orientation": "portrait"
+}

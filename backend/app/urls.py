@@ -5,9 +5,10 @@ from django.conf.urls.static import static
 from cars.views import (
     CarsListView, NewCarCreateView, CarDetailView, CarUpdateView, CarDeleteView,
     cars_api_list, brands_api_list, categorias_api_list,
-    car_create_api, car_detail_api, serve_media_view,
+    car_create_api, car_detail_api, serve_media_view, semantic_search_api, chatbot_api,
+    car_alert_api, dashboard_stats_api,
 )
-from accounts.views import register_view, login_view, logout_view
+from accounts.views import register_view, login_view, logout_view, token_refresh_view
 from app.health import health_view
 
 
@@ -27,5 +28,10 @@ urlpatterns = [
     path('api/v1/categorias/', categorias_api_list, name='categorias_api_list'),
     path('api/v1/car/create/', car_create_api, name='car_create_api'),
     path('api/v1/car/<int:pk>/', car_detail_api, name='car_detail_api'),
+    path('api/v1/car/<int:pk>/alert/', car_alert_api, name='car_alert_api'),
+    path('api/v1/token/refresh/', token_refresh_view, name='token_refresh_api'),
+    path('api/v1/cars/semantic_search/', semantic_search_api, name='semantic_search_api'),
+    path('api/v1/chatbot/', chatbot_api, name='chatbot_api'),
+    path('api/v1/dashboard/stats/', dashboard_stats_api, name='dashboard_stats_api'),
     path('media/<path:path>', serve_media_view, name='serve_media'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

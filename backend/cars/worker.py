@@ -39,20 +39,21 @@ def auto_update_categories_and_bios():
     e as preenche usando a IA da Groq de forma independente.
     """
     from cars.models import Car
-    from openai_api.client import get_car_ai_category, get_car_ai_bio
+    from openai_api.client import get_car_ai_category, get_car_ai_bio, get_car_ai_spec_sheet
     
-    print(f"[{datetime.now()}] [Text Worker] Checking for cars with missing category or bio...", flush=True)
+    print(f"[{datetime.now()}] [Text Worker] Checking for cars with missing category, bio, or spec sheet...", flush=True)
     
     cars_to_update = Car.objects.filter(
         Q(categoria='') | Q(categoria__isnull=True) | Q(categoria=None) |
-        Q(bio='') | Q(bio__isnull=True)
+        Q(bio='') | Q(bio__isnull=True) |
+        Q(ficha_tecnica='') | Q(ficha_tecnica__isnull=True)
     )
     
     if not cars_to_update.exists():
-        print(f"[{datetime.now()}] [Text Worker] All categories and bios are up to date.", flush=True)
+        print(f"[{datetime.now()}] [Text Worker] All categories, bios, and spec sheets are up to date.", flush=True)
         return
         
-    print(f"[{datetime.now()}] [Text Worker] Found {cars_to_update.count()} cars needing text updates.", flush=True)
+    print(f"[{datetime.now()}] [Text Worker] Found {cars_to_update.count()} cars needing text/spec updates.", flush=True)
     
     try:
         for car in cars_to_update:
@@ -89,6 +90,17 @@ def auto_update_categories_and_bios():
                         print(f"   [Text Worker] Bio de {full_name} gerada com sucesso.", flush=True)
                 except Exception as e:
                     print(f"   [Text Worker Erro] Erro ao gerar bio de {full_name}: {e}", flush=True)
+
+            # 3. Ficha Técnica
+            if not car.ficha_tecnica:
+                try:
+                    ficha = get_car_ai_spec_sheet(brand_name, model_name, car.model_year)
+                    if ficha:
+                        car.ficha_tecnica = ficha
+                        updated_fields.append('ficha_tecnica')
+                        print(f"   [Text Worker] Ficha técnica de {full_name} gerada com sucesso.", flush=True)
+                except Exception as e:
+                    print(f"   [Text Worker Erro] Erro ao gerar ficha técnica de {full_name}: {e}", flush=True)
             
             if updated_fields:
                 car.skip_signal = True  # Impede loops ou re-disparo do post_save signal
@@ -176,6 +188,65 @@ def photo_update_loop_task():
             print(f"[Photo Worker Loop Exception] {e}", flush=True)
         time.sleep(300)
 
+def check_broken_images_task():
+    """Varre todas as fotos e remove referências quebradas para re-download."""
+    from cars.models import Car
+    import requests
+    print(f"[{datetime.now()}] [Weekly Image Checker] Iniciando verificação de links de imagem...", flush=True)
+    cars = Car.objects.exclude(photo='').exclude(photo__isnull=True)
+    headers = {"User-Agent": "CarrosBot/1.0 (cmsampaio71@gmail.com)"}
+    broken_count = 0
+    
+    for car in cars:
+        try:
+            car = Car.objects.get(pk=car.id)
+        except Car.DoesNotExist:
+            continue
+            
+        photo_url = car.photo.url if hasattr(car.photo, 'url') else str(car.photo)
+        if photo_url.startswith('http'):
+            try:
+                res = requests.head(photo_url, headers=headers, timeout=5)
+                if res.status_code >= 400:
+                    res = requests.get(photo_url, headers=headers, timeout=5, stream=True)
+                    if res.status_code >= 400:
+                        print(f"   [Weekly Image Checker] Link quebrado ({res.status_code}) para o carro {car.id}. Resetando foto.", flush=True)
+                        car.photo = None
+                        car.photo_placeholder = None
+                        car.skip_signal = True
+                        car.save()
+                        broken_count += 1
+            except Exception as e:
+                print(f"   [Weekly Image Checker] Erro ao checar URL para o carro {car.id}: {e}. Resetando foto.", flush=True)
+                car.photo = None
+                car.photo_placeholder = None
+                car.skip_signal = True
+                car.save()
+                broken_count += 1
+        else:
+            import os
+            from django.conf import settings
+            local_path = os.path.join(settings.MEDIA_ROOT, str(car.photo))
+            if not os.path.exists(local_path):
+                print(f"   [Weekly Image Checker] Arquivo local inexistente para o carro {car.id}. Resetando foto.", flush=True)
+                car.photo = None
+                car.photo_placeholder = None
+                car.skip_signal = True
+                car.save()
+                broken_count += 1
+    print(f"[{datetime.now()}] [Weekly Image Checker] Verificação concluída. Resetou {broken_count} fotos.", flush=True)
+
+def weekly_check_loop_task():
+    """Tarefa periódica executada a cada 7 dias para monitoramento de links quebrados."""
+    # Espera 1 hora antes do primeiro run
+    time.sleep(3600)
+    while True:
+        try:
+            check_broken_images_task()
+        except Exception as e:
+            print(f"[Weekly Checker Loop Exception] {e}", flush=True)
+        time.sleep(7 * 24 * 3600)
+
 def worker_loop():
     """
     Iniciador principal do background loop.
@@ -200,3 +271,8 @@ def worker_loop():
     photo_thread = threading.Thread(target=photo_update_loop_task, name="PhotoScraperWorkerThread")
     photo_thread.daemon = True
     photo_thread.start()
+
+    # 4. Thread de Checagem Semanal de Imagens Quebradas
+    broken_check_thread = threading.Thread(target=weekly_check_loop_task, name="WeeklyBrokenImageThread")
+    broken_check_thread.daemon = True
+    broken_check_thread.start()

@@ -2,6 +2,12 @@ import { apiFetch } from './api';
 import { showToast } from './toast';
 
 document.addEventListener('DOMContentLoaded', () => {
+    if (window.location.pathname.includes('/login/')) {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('username');
+    }
+
     const loginForm = document.getElementById('login-form') as HTMLFormElement | null;
     const registerForm = document.getElementById('register-form') as HTMLFormElement | null;
     const togglePasswordBtn = document.getElementById('toggle-password') as HTMLButtonElement | null;
@@ -46,6 +52,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('username', data.username);
                     if (data.token) {
                         localStorage.setItem('auth_token', data.token);
+                    }
+                    if (data.refresh_token) {
+                        localStorage.setItem('refresh_token', data.refresh_token);
                     }
                     showToast(data.message || 'Login realizado com sucesso!', 'success');
                     setTimeout(() => {

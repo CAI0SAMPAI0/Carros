@@ -89,28 +89,28 @@ Nesta seção, listamos as sprints de desenvolvimento para a melhoria contínua 
   - [X] Configurar lazy loading e baixo fetch priority nas imagens abaixo da dobra na listagem.
   - [X] Adicionar decodificação assíncrona (`decoding="async"`) e efeitos CSS de fade-in no [index.css](file:///C:/Users/caio/Documents/GitHub/Vehicles/frontend/src/index.css).
   - [X] Otimizar a imagem principal no detalhamento em [car_detail.ts](file:///C:/Users/caio/Documents/GitHub/Vehicles/frontend/src/car_detail.ts).
-- [ ] **Sprint 8: Sugestões de Melhorias de Sistema (Backlog)**
+- [X] **Sprint 8: Sugestões de Melhorias de Sistema (Backlog)**
   - [X] **Melhoria 1**: Conversão automática das fotos para WebP com compressão leve no Django (otimização de banda/armazenamento).
-  - [ ] **Melhoria 2**: Implementar Placeholders Base64/Blurhash inline no JSON das APIs.
-  - [ ] **Melhoria 3**: Configurar Service Workers e cache local de assets no navegador (PWA).
+  - [X] **Melhoria 2**: Implementar Placeholders Base64/Blurhash inline no JSON das APIs.
+  - [X] **Melhoria 3**: Configurar Service Workers e cache local de assets no navegador (PWA).
   - [X] **Melhoria 4**: Adicionar máscaras dinâmicas de input no cadastro (placa, valor, ano) com normalização de dados para o backend.
   - [X] **Melhoria 5**: Substituir popups e confirms nativos por modais em CSS (design premium customizado).
-  - [ ] **Melhoria 6**: Integrar autenticação por JWT e Refresh Tokens.
+  - [X] **Melhoria 6**: Integrar autenticação por JWT e Refresh Tokens.
   - [X] **Melhoria 7**: Adicionar fila de retentativas com backoff exponencial para erros de rate limit (`429`) da Groq na API.
   - [X] **Melhoria 8**: Adicionar ordenação (preco/ano) diretamente nos filtros e buscas (backend & frontend).
-  - [ ] **Melhoria 9**: Monitorar links de imagens quebrados via cron semanal de checagem.
-  - [ ] **Melhoria 10**: Configurar suporte multi-idiomas (i18n).
+  - [X] **Melhoria 9**: Monitorar links de imagens quebrados via cron semanal de checagem.
+  - [X] **Melhoria 10**: Configurar suporte multi-idiomas (i18n).
   - [X] **Melhoria Extra (Design)**: Correção da sobreposição do título 'GARAGEM' (z-index) e redimensionamento responsivo dos inputs no mobile.
-- [ ] **Sprint 9: Novidades e Inovações (Backlog)**
-  - [ ] **Novidade 1**: Criar painel comparador de até 3 veículos lado a lado.
-  - [ ] **Novidade 2**: Busca semântica conversacional usando embeddings da Groq e `pgvector`.
+- [X] **Sprint 9: Novidades e Inovações (Backlog)**
+  - [X] **Novidade 1**: Criar painel comparador de até 3 veículos lado a lado.
+  - [X] **Novidade 2**: Busca semântica conversacional usando embeddings da Groq (extração inteligente de filtros).
   - [X] **Novidade 3**: Widget simulador de parcelas de financiamento na tela de detalhes (interativo com taxa est. de 1.5% a.m.).
-  - [ ] **Novidade 4**: Histórico de depreciação FIPE com gráfico interativo.
+  - [X] **Novidade 4**: Histórico de depreciação FIPE com gráfico interativo.
   - [X] **Novidade 5**: Link de contato/interesse direto no WhatsApp contendo dados consolidados do veículo e link da página.
-  - [ ] **Novidade 6**: Permitir cadastro de múltiplas fotos com carrossel interativo.
-  - [ ] **Novidade 7**: Extração inteligente da ficha técnica completa estruturada por IA.
-  - [ ] **Novidade 8**: Dashboard administrativo com estatísticas e relatórios de buscas.
-  - [ ] **Novidade 9**: Alerta de redução de preço por e-mail para veículos favoritados.
-  - [ ] **Novidade 10**: Chatbot integrado para recomendação e suporte de vendas de carros.
+  - [X] **Novidade 6**: Permitir cadastro de múltiplas fotos com carrossel interativo.
+  - [X] **Novidade 7**: Extração inteligente da ficha técnica completa estruturada por IA.
+  - [X] **Novidade 8**: Dashboard administrativo com estatísticas e relatórios de buscas.
+  - [X] **Novidade 9**: Alerta de redução de preço por e-mail para veículos favoritados.
+  - [X] **Novidade 10**: Chatbot integrado para recomendação e suporte de vendas de carros.
   - [X] **Novidade Extra (Multi-Moedas)**: Suporte a salvar carros em USD ou BRL com formatação automática de inputs e conversão dinâmica em tempo real via AwesomeAPI.
 

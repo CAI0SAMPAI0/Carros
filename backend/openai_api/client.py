@@ -89,3 +89,37 @@ Sem explicações adicionais.
     except Exception as e:
         print(f"Aviso: Erro ao classificar categoria para {brand} {model}: {e}")
         return 'OUTRO'
+
+
+def get_car_ai_spec_sheet(brand, model, year):
+    """
+    Consulta a Groq para extrair a ficha técnica estruturada do carro como JSON.
+    """
+    prompt = f"""
+    Gere a ficha técnica completa do carro "{brand} {model} {year or ''}" em formato JSON estruturado.
+    A ficha técnica deve conter os seguintes campos (com valores reais aproximados para este modelo específico):
+    - "Motor": (ex: 2.0 Turbo, 1.0 Flex, etc.)
+    - "Potência": (ex: 150 cv, 252 hp, etc.)
+    - "Transmissão": (ex: Automática 8 marchas, Manual 5 marchas, etc.)
+    - "Combustível": (ex: Gasolina, Flex, Elétrico, Diesel, etc.)
+    - "Aceleração 0-100 km/h": (ex: 6.2s, 11.5s, etc.)
+    - "Consumo Médio": (ex: 10.5 km/l, etc.)
+    
+    Retorne APENAS o JSON válido com estas chaves exatas. Não inclua markdown, não inclua blocos de código ou explicações extras.
+    """
+    try:
+        content = _execute_groq_completion(prompt, max_tokens=250, response_format={"type": "json_object"})
+        # Valida se é um JSON válido
+        json.loads(content.strip())
+        return content.strip()
+    except Exception as e:
+        print(f"Erro ao obter ficha técnica por IA: {e}")
+        fallback = {
+            "Motor": "Não informado",
+            "Potência": "Não informado",
+            "Transmissão": "Não informado",
+            "Combustível": "Não informado",
+            "Aceleração 0-100 km/h": "Não informado",
+            "Consumo Médio": "Não informado"
+        }
+        return json.dumps(fallback)

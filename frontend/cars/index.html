@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AutoDrive - Encontre seu carro perfeito</title>
     <link rel="icon" type="image/png" href="/autodrive_logo.png">
+    <link rel="manifest" href="/manifest.json">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,9 +35,14 @@
             <div class="search-inner">
                 <div class="search-label">Encontre seu carro</div>
                 <div class="search-controls">
-                    <div class="search-bar" style="flex:1; max-width:380px;">
-                        <input type="text" id="search-input" placeholder="Modelo, marca...">
-                        <button type="button" id="search-btn">Buscar</button>
+                    <div class="search-bar" style="flex:1; max-width:400px; display:flex;">
+                        <input type="text" id="search-input" placeholder="Modelo, marca..." style="border-top-right-radius:0; border-bottom-right-radius:0;">
+                        <button type="button" id="search-btn" style="border-radius:0;">Buscar</button>
+                        <button type="button" id="ai-search-btn" title="Busca Inteligente com IA" style="background: linear-gradient(135deg, #7f00ff, #e100ff); border: none; padding: 0.5rem 0.8rem; border-top-right-radius: 4px; border-bottom-right-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; transition: opacity 0.2s;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2L9 9 2 12l7 3 3 7 3-7 7-3-7-3-3-7zm0 4.5l1.6 3.7 3.7 1.6-3.7 1.6-1.6 3.7-1.6-3.7-3.7-1.6 3.7-1.6 1.6-3.7z"/>
+                            </svg>
+                        </button>
                     </div>
                     <select id="brand-filter" class="filter-select">
                         <option value="">Todas as marcas</option>
@@ -66,6 +72,81 @@
         </div>
     </main>
 
+    <!-- COMPARISON DRAWER -->
+    <div id="comparison-drawer" class="comp-drawer" style="display: none;">
+        <div class="comp-drawer-inner">
+            <div class="comp-drawer-info">
+                <span id="comp-count">0</span>/3 selecionados
+            </div>
+            <div id="comp-items-preview" class="comp-items-preview"></div>
+            <div class="comp-drawer-actions">
+                <button id="btn-compare-clear" class="btn btn-ghost" style="padding: 0.5rem 1rem;">Limpar</button>
+                <button id="btn-compare-open" class="btn btn-primary" style="padding: 0.5rem 1rem;">Comparar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMPARISON MODAL -->
+    <div id="comparison-modal" class="modal-overlay" style="display: none; padding: 1rem;">
+        <div class="modal-card" style="max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+                <h3 style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-size: 1.5rem; text-transform: uppercase; color: var(--text-hi);">Comparativo de Veículos</h3>
+                <button id="btn-close-compare" class="btn btn-ghost" style="font-size: 1.8rem; padding: 0.2rem 0.6rem; min-width: 0; line-height: 1;">&times;</button>
+            </div>
+            <div class="modal-body" style="margin-bottom: 0; padding: 1rem 0;">
+                <div id="comparison-table-container" style="overflow-x: auto; width: 100%; margin-top: 1rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD MODAL -->
+    <div id="dashboard-modal" class="modal-overlay" style="display: none; padding: 1rem; z-index: 1100;">
+        <div class="modal-card" style="max-width: 800px; width: 100%; max-height: 90vh; overflow-y: auto; backdrop-filter: blur(20px); background: rgba(18, 18, 18, 0.85); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+                <h3 id="dashboard-modal-title" style="margin: 0; font-family: 'Barlow Condensed', sans-serif; font-size: 1.5rem; text-transform: uppercase; color: var(--text-hi);">Painel de Controle e Estatísticas</h3>
+                <button id="btn-close-dashboard" class="btn btn-ghost" style="font-size: 1.8rem; padding: 0.2rem 0.6rem; min-width: 0; line-height: 1;">&times;</button>
+            </div>
+            <div class="modal-body" style="margin-top: 1.5rem;">
+                <!-- Key Cards -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 1.25rem; border-radius: 8px;">
+                        <div id="dash-label-total-cars" style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">Total de Veículos</div>
+                        <div id="dash-total-cars" style="font-size: 2.2rem; font-weight: 700; color: var(--gold); font-family: 'Barlow Condensed', sans-serif; margin-top: 0.5rem;">0</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 1.25rem; border-radius: 8px;">
+                        <div id="dash-label-total-valuation" style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">Valor Total do Estoque</div>
+                        <div id="dash-total-value" style="font-size: 1.8rem; font-weight: 700; color: var(--text-hi); font-family: 'Barlow Condensed', sans-serif; margin-top: 0.5rem; line-height: 1.2;">R$ 0,00</div>
+                        <div id="dash-total-value-converted" style="font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem;">$ 0.00</div>
+                    </div>
+                </div>
+
+                <!-- Graphs/Lists Split -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.25rem; border-radius: 8px;">
+                        <h4 id="dash-label-by-brand" style="margin-top:0; font-family:'Barlow Condensed',sans-serif; text-transform:uppercase; color:var(--text-hi); font-size:1.1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Quantidade por Marca</h4>
+                        <div id="dash-by-brand-list" style="display:flex; flex-direction:column; gap:0.5rem; margin-top:1rem; max-height: 200px; overflow-y: auto;">
+                            <!-- Injected here -->
+                        </div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.25rem; border-radius: 8px;">
+                        <h4 id="dash-label-by-category" style="margin-top:0; font-family:'Barlow Condensed',sans-serif; text-transform:uppercase; color:var(--text-hi); font-size:1.1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Quantidade por Categoria</h4>
+                        <div id="dash-by-category-list" style="display:flex; flex-direction:column; gap:0.5rem; margin-top:1rem; max-height: 200px; overflow-y: auto;">
+                            <!-- Injected here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Searches Section -->
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 1.25rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <h4 id="dash-label-searches" style="margin-top:0; font-family:'Barlow Condensed',sans-serif; text-transform:uppercase; color:var(--text-hi); font-size:1.1rem; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Buscas Recentes dos Clientes</h4>
+                    <div id="dash-searches-list" style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-top:1rem;">
+                        <!-- Injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- FOOTER -->
     <footer>
         <div class="footer-logo">Auto<span>Drive</span></div>
@@ -74,6 +155,7 @@
 
     <!-- Scripts -->
     <script type="module" src="/src/cars.ts"></script>
+    <script type="module" src="/src/chatbot.ts"></script>
 
 
 

@@ -39,11 +39,15 @@ def login_view(request):
             user = authenticate(request, username=username, password=password)
             if user is not None:
                 login(request, user)
-                token = AuthToken.get_or_create_for_user(user)
+                
+                from accounts.jwt_helper import generate_tokens_for_user
+                tokens = generate_tokens_for_user(user)
+                
                 return JsonResponse({
                     'success': True,
                     'username': user.username,
-                    'token': token,
+                    'token': tokens['access_token'],
+                    'refresh_token': tokens['refresh_token'],
                     'message': 'Login realizado com sucesso!',
                 })
             else:
@@ -53,6 +57,33 @@ def login_view(request):
                 )
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+@csrf_exempt
+def token_refresh_view(request):
+    if request.method == 'POST' and request.content_type == 'application/json':
+        try:
+            data = json.loads(request.body)
+            refresh_token = data.get('refresh_token')
+            if not refresh_token:
+                return JsonResponse({'success': False, 'error': 'Refresh token is required.'}, status=400)
+            
+            from accounts.jwt_helper import verify_jwt, generate_tokens_for_user
+            payload = verify_jwt(refresh_token)
+            if not payload or payload.get('token_type') != 'refresh':
+                return JsonResponse({'success': False, 'error': 'Invalid or expired refresh token.'}, status=401)
+            
+            from django.contrib.auth.models import User
+            user = User.objects.get(id=payload['user_id'])
+            tokens = generate_tokens_for_user(user)
+            
+            return JsonResponse({
+                'success': True,
+                'token': tokens['access_token'],
+                'refresh_token': tokens['refresh_token']
+            })
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=400)
+    return JsonResponse({'success': False, 'error': 'Method not allowed.'}, status=405)
 
     # Fallback HTML
     login_form = AuthenticationForm()

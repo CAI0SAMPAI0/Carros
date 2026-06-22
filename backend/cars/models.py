@@ -42,6 +42,8 @@ class Car(models.Model):
         default='BRL',
     )
     photo = models.ImageField(upload_to='cars/', blank=True, null=True)
+    photo_placeholder = models.TextField(blank=True, null=True)
+    ficha_tecnica = models.TextField(blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
     categoria = models.CharField(
         max_length=20,
@@ -51,6 +53,29 @@ class Car(models.Model):
         default=None,
     )
     
+    def save(self, *args, **kwargs):
+        # Gera o placeholder em base64 se houver uma nova foto e nenhum placeholder gerado
+        if self.photo and not self.photo_placeholder:
+            try:
+                from PIL import Image
+                import base64
+                import io
+                
+                # Abre a imagem
+                self.photo.open('rb')
+                img = Image.open(self.photo)
+                # Cria miniatura de 20x15
+                img.thumbnail((20, 20))
+                if img.mode in ('RGBA', 'LA', 'P'):
+                    img = img.convert('RGB')
+                buffer = io.BytesIO()
+                img.save(buffer, format='JPEG', quality=20)
+                self.photo_placeholder = f"data:image/jpeg;base64,{base64.b64encode(buffer.getvalue()).decode('utf-8')}"
+                self.photo.close()
+            except Exception as e:
+                print(f"[Placeholder] Erro ao gerar: {e}", flush=True)
+        super().save(*args, **kwargs)
+
     def __str__(self) -> str:
         return self.model
 
@@ -72,3 +97,45 @@ def clear_cache_before_change(sender, instance, **kwargs):
         cache.clear()
     except Exception as e:
         print(f"Aviso: Não foi possível limpar o cache (Redis): {e}")
+
+
+class CarImage(models.Model):
+    car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='cars/extra/')
+    photo_placeholder = models.TextField(blank=True, null=True)
+    
+    def save(self, *args, **kwargs):
+        # Gera o placeholder em base64 se houver uma nova foto e nenhum placeholder gerado
+        if self.image and not self.photo_placeholder:
+            try:
+                from PIL import Image
+                import base64
+                import io
+                
+                self.image.open('rb')
+                img = Image.open(self.image)
+                img.thumbnail((20, 20))
+                if img.mode in ('RGBA', 'LA', 'P'):
+                    img = img.convert('RGB')
+                buffer = io.BytesIO()
+                img.save(buffer, format='JPEG', quality=20)
+                self.photo_placeholder = f"data:image/jpeg;base64,{base64.b64encode(buffer.getvalue()).decode('utf-8')}"
+                self.image.close()
+            except Exception as e:
+                print(f"[Extra Image Placeholder] Erro ao gerar: {e}", flush=True)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Imagem de {self.car.model}"
+
+
+class PriceAlert(models.Model):
+    car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='price_alerts')
+    email = models.EmailField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('car', 'email')
+
+    def __str__(self):
+        return f"Alerta para {self.car.model} - {self.email}"

@@ -21,7 +21,38 @@ export async function apiFetch<T = any>(endpoint: string, options: RequestInit =
         const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
         
         if (response.status === 401) {
+            const refreshToken = localStorage.getItem('refresh_token');
+            if (refreshToken) {
+                try {
+                    const refreshResponse = await fetch(`${API_BASE_URL}/token/refresh/`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ refresh_token: refreshToken })
+                    });
+                    if (refreshResponse.ok) {
+                        const refreshData = await refreshResponse.json();
+                        if (refreshData && refreshData.token) {
+                            localStorage.setItem('auth_token', refreshData.token);
+                            if (refreshData.refresh_token) {
+                                localStorage.setItem('refresh_token', refreshData.refresh_token);
+                            }
+                            headers['Authorization'] = `Token ${refreshData.token}`;
+                            const retryResponse = await fetch(`${API_BASE_URL}${endpoint}`, {
+                                ...options,
+                                headers
+                            });
+                            if (retryResponse.ok) {
+                                return await retryResponse.json();
+                            }
+                        }
+                    }
+                } catch (refreshErr) {
+                    console.error('Erro ao renovar token:', refreshErr);
+                }
+            }
+            
             localStorage.removeItem('auth_token');
+            localStorage.removeItem('refresh_token');
             // Só redireciona se não estivermos já na página de login
             if (!window.location.pathname.includes('login')) {
                 window.location.href = '../login/';
@@ -59,6 +90,15 @@ if (typeof document !== 'undefined') {
                 sessionStorage.removeItem('last_selected_category');
             });
         });
+    });
+}
+
+// Registro do Service Worker para PWA
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('Service Worker registrado com sucesso! Escopo:', reg.scope))
+            .catch(err => console.error('Erro ao registrar o Service Worker:', err));
     });
 }
 
