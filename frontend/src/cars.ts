@@ -236,12 +236,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ? `<span class="car-category-badge" style="color:${categoriaColor};border-color:${categoriaColor};">${categoriaLabel}</span>`
                 : '';
 
+            const isAboveFold = index < 6;
+            const imgAttrs = isAboveFold
+                ? 'loading="eager" fetchpriority="high" decoding="async" class="img-fade-in"'
+                : 'loading="lazy" fetchpriority="low" decoding="async" class="img-fade-in"';
+
             return `
                 <a href="../car_detail/?id=${car.id}" class="car-link anim-fadeup" style="animation-delay:${(index % ITEMS_PER_PAGE) * 50}ms">
                     <div class="car-img">
                         <span class="car-index">${indexString}</span>
                         ${fotoUrl
-                            ? `<img src="${fotoUrl}" alt="${car.modelo}" onError="this.style.display='none';this.nextElementSibling.style.display='flex';">`
+                            ? `<img src="${fotoUrl}" alt="${car.marca || ''} ${car.modelo}" ${imgAttrs} onload="this.classList.add('loaded')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">`
                             : ''
                         }
                         <div class="no-photo" style="${fotoUrl ? 'display:none;' : ''}">

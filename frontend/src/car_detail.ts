@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (photoContainer) {
             if (fotoUrl) {
-                photoContainer.innerHTML = `<img src="${fotoUrl}" alt="${car.modelo}">`;
+                photoContainer.innerHTML = `<img src="${fotoUrl}" alt="${car.marca || ''} ${car.modelo}" loading="eager" fetchpriority="high" decoding="async" class="img-fade-in" onload="this.classList.add('loaded')">`;
             } else {
                 photoContainer.innerHTML = `
                     <div class="no-photo-lg">
