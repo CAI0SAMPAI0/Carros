@@ -125,21 +125,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Tradução estática dos labels do formulário
     const formLabels = document.querySelectorAll('#car-form label');
     if (formLabels.length >= 8) {
-        formLabels[0].childNodes[0].textContent = t('label_brand') + ' ';
-        formLabels[1].childNodes[0].textContent = t('label_model') + ' ';
+        formLabels[0].childNodes[0].textContent = t('label_model') + ' ';
+        formLabels[1].childNodes[0].textContent = t('label_brand') + ' ';
         formLabels[2].childNodes[0].textContent = t('label_factory_year') + ' ';
         formLabels[3].childNodes[0].textContent = t('label_model_year') + ' ';
         formLabels[4].childNodes[0].textContent = t('label_plate') + ' ';
         formLabels[5].childNodes[0].textContent = t('label_value') + ' ';
-        formLabels[6].childNodes[0].textContent = t('label_currency') + ' ';
-        formLabels[7].childNodes[0].textContent = t('label_photo') + ' ';
+        formLabels[6].childNodes[0].textContent = t('label_photo') + ' ';
+        formLabels[7].childNodes[0].textContent = t('label_desc') + ' ';
     }
-    
-    const formFieldDesc = document.querySelector('label[for="desc"]');
-    if (formFieldDesc) formFieldDesc.childNodes[0].textContent = t('label_desc');
-
-    const formFieldCat = document.querySelector('label[for="categoria"]');
-    if (formFieldCat) formFieldCat.childNodes[0].textContent = t('label_category');
 
     const modelInput = document.getElementById('model') as HTMLInputElement | null;
     if (modelInput) modelInput.placeholder = t('placeholder_model');
@@ -293,12 +287,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (valueInput) {
-        valueInput.addEventListener('input', () => {
+        // Formata o valor inicial se já existir
+        const currentCurrency = currencySelect?.value || 'BRL';
+        if (valueInput.value) {
+            let raw = valueInput.value.replace(/[^\d,.]/g, '');
+            if (raw) {
+                let numericVal = 0;
+                if (currentCurrency === 'BRL') {
+                    numericVal = parseFloat(raw.replace(/\./g, '').replace(',', '.'));
+                } else {
+                    numericVal = parseFloat(raw.replace(/,/g, ''));
+                }
+                if (!isNaN(numericVal)) {
+                    valueInput.value = formatCurrency(numericVal, currentCurrency);
+                }
+            }
+        }
+
+        valueInput.addEventListener('focus', () => {
+            let raw = valueInput.value.replace(/[^\d,.]/g, '');
+            if (raw) {
+                let numericVal = 0;
+                const currentCurrency = currencySelect?.value || 'BRL';
+                if (currentCurrency === 'BRL') {
+                    numericVal = parseFloat(raw.replace(/\./g, '').replace(',', '.'));
+                } else {
+                    numericVal = parseFloat(raw.replace(/,/g, ''));
+                }
+                if (!isNaN(numericVal)) {
+                    valueInput.type = 'number';
+                    valueInput.value = numericVal.toString();
+                }
+            } else {
+                valueInput.type = 'number';
+            }
+        });
+
+        valueInput.addEventListener('blur', () => {
+            const val = parseFloat(valueInput.value);
+            valueInput.type = 'text';
             const currentCurrency = currencySelect?.value || 'BRL';
-            let val = valueInput.value.replace(/\D/g, '');
-            if (val) {
-                const numberVal = parseFloat(val) / 100;
-                valueInput.value = formatCurrency(numberVal, currentCurrency);
+            if (!isNaN(val)) {
+                valueInput.value = formatCurrency(val, currentCurrency);
             } else {
                 valueInput.value = '';
             }
@@ -310,18 +340,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             const newCurrency = currencySelect.value;
             if (newCurrency === lastCurrency) return;
 
-            let val = valueInput?.value.replace(/\D/g, '');
-            if (val && valueInput) {
-                let numericVal = parseFloat(val) / 100;
-
-                // Converte utilizando a taxa obtida da AwesomeAPI
-                if (lastCurrency === 'BRL' && newCurrency === 'USD') {
-                    numericVal = numericVal / usdToBrlRate;
-                } else if (lastCurrency === 'USD' && newCurrency === 'BRL') {
-                    numericVal = numericVal * usdToBrlRate;
+            let raw = valueInput?.value.replace(/[^\d,.]/g, '') || '';
+            if (raw && valueInput) {
+                let numericVal = 0;
+                if (lastCurrency === 'BRL') {
+                    numericVal = parseFloat(raw.replace(/\./g, '').replace(',', '.'));
+                } else {
+                    numericVal = parseFloat(raw.replace(/,/g, ''));
                 }
 
-                valueInput.value = formatCurrency(numericVal, newCurrency);
+                if (!isNaN(numericVal)) {
+                    // Converte utilizando a taxa obtida da AwesomeAPI
+                    if (lastCurrency === 'BRL' && newCurrency === 'USD') {
+                        numericVal = numericVal / usdToBrlRate;
+                    } else if (lastCurrency === 'USD' && newCurrency === 'BRL') {
+                        numericVal = numericVal * usdToBrlRate;
+                    }
+
+                    if (document.activeElement === valueInput) {
+                        valueInput.value = numericVal.toFixed(2);
+                    } else {
+                        valueInput.value = formatCurrency(numericVal, newCurrency);
+                    }
+                }
             }
             lastCurrency = newCurrency;
         });

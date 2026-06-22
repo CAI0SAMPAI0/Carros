@@ -343,7 +343,7 @@ footer p {
   overflow: hidden;
 }
 
-/*.search-strip::before {
+.search-strip::before {
   content: 'GARAGEM';
   position: absolute;
   right: 2rem;
@@ -358,7 +358,8 @@ footer p {
   line-height: 1;
   display: none;
   z-index: 1;
-}*/
+  opacity: 0.15;
+}
 
 @media (min-width: 1450px) {
   .search-strip::before {
