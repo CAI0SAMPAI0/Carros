@@ -164,6 +164,7 @@ def fetch_and_save_car_photo_with_hashes(car_id, existing_hashes):
                                 continue
 
                             file_name = f"{brand_name}_{model_name}_{year}.jpg".replace(" ", "_").lower()
+                            car.skip_signal = True
                             car.photo.save(file_name, ContentFile(img_content), save=True)
                             print(f"   [Sucesso] Imagem única salva para {brand_name} {model_name}: {url}")
 

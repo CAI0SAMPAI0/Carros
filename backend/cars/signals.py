@@ -60,6 +60,8 @@ def car_pre_save(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Car)
 def car_post_save(sender, instance, created, **kwargs):
+    if getattr(instance, 'skip_signal', False):
+        return
     car_invetory_update()
 
     # Só dispara IA e foto quando houver campos faltando (evita re-trigger de update_fields)

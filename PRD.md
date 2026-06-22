@@ -80,4 +80,35 @@ Nesta seção, listamos as sprints de desenvolvimento para a melhoria contínua 
 - [X] **Sprint 5: Validação Final e Commit**
   - [X] Executar testes locais básicos para garantir que a sintaxe Python e as importações do Django estão corretas.
   - [X] Realizar o commit das modificações e fazer o `git push`.
+- [X] **Sprint 6: Concorrência e Paralelismo de Workers de IA**
+  - [X] Separar a rotina do [worker.py](file:///C:/Users/caio/Documents/GitHub/Vehicles/backend/cars/worker.py) em duas threads daemon paralelas (`TextAIWorkerThread` e `PhotoScraperWorkerThread`).
+  - [X] Garantir que a thread de IA de texto classifique as categorias e gere as bios sem aguardar pela busca/download de imagens de outros carros.
+  - [X] Implementar o atributo `skip_signal` em [signals.py](file:///C:/Users/caio/Documents/GitHub/Vehicles/backend/cars/signals.py) e [utils.py](file:///C:/Users/caio/Documents/GitHub/Vehicles/backend/cars/utils.py) para contornar disparos recursivos do post_save de forma segura.
+- [X] **Sprint 7: Otimizações de Imagem no Frontend**
+  - [X] Implementar carregamento prioritário (`loading="eager"` e `fetchpriority="high"`) nas imagens acima da dobra na listagem em [cars.ts](file:///C:/Users/caio/Documents/GitHub/Vehicles/frontend/src/cars.ts).
+  - [X] Configurar lazy loading e baixo fetch priority nas imagens abaixo da dobra na listagem.
+  - [X] Adicionar decodificação assíncrona (`decoding="async"`) e efeitos CSS de fade-in no [index.css](file:///C:/Users/caio/Documents/GitHub/Vehicles/frontend/src/index.css).
+  - [X] Otimizar a imagem principal no detalhamento em [car_detail.ts](file:///C:/Users/caio/Documents/GitHub/Vehicles/frontend/src/car_detail.ts).
+- [ ] **Sprint 8: Sugestões de Melhorias de Sistema (Backlog)**
+  - [ ] **Melhoria 1**: Conversão automática das fotos para WebP com compressão leve no Django.
+  - [ ] **Melhoria 2**: Implementar Placeholders Base64/Blurhash inline no JSON das APIs.
+  - [ ] **Melhoria 3**: Configurar Service Workers e cache local de assets no navegador (PWA).
+  - [ ] **Melhoria 4**: Adicionar máscaras dinâmicas de input no cadastro (placa, valor, ano).
+  - [ ] **Melhoria 5**: Substituir popups e confirms nativos por modais em CSS.
+  - [ ] **Melhoria 6**: Integrar autenticação por JWT e Refresh Tokens.
+  - [ ] **Melhoria 7**: Adicionar fila de retentativas para erros de rate limit (`429`) da Groq.
+  - [ ] **Melhoria 8**: Adicionar ordenação (preco/ano) diretamente nos filtros e buscas.
+  - [ ] **Melhoria 9**: Monitorar links de imagens quebrados via cron semanal de checagem.
+  - [ ] **Melhoria 10**: Configurar suporte multi-idiomas (i18n).
+- [ ] **Sprint 9: Novidades e Inovações (Backlog)**
+  - [ ] **Novidade 1**: Criar painel comparador de até 3 veículos lado a lado.
+  - [ ] **Novidade 2**: Busca semântica conversacional usando embeddings da Groq e `pgvector`.
+  - [ ] **Novidade 3**: Widget simulador de parcelas de financiamento na tela de detalhes.
+  - [ ] **Novidade 4**: Histórico de depreciação FIPE com gráfico interativo.
+  - [ ] **Novidade 5**: Exportação de PDF técnico e link de compartilhamento direto no WhatsApp.
+  - [ ] **Novidade 6**: Permitir cadastro de múltiplas fotos com carrossel interativo.
+  - [ ] **Novidade 7**: Extração inteligente da ficha técnica completa estruturada por IA.
+  - [ ] **Novidade 8**: Dashboard administrativo com estatísticas e relatórios de buscas.
+  - [ ] **Novidade 9**: Alerta de redução de preço por e-mail para veículos favoritados.
+  - [ ] **Novidade 10**: Chatbot integrado para recomendação e suporte de vendas de carros.
 
