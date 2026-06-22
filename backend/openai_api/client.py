@@ -10,12 +10,19 @@ GROQ_API_KEY = os.getenv('GROQ_API_KEY')
 
 import time
 
+def get_groq_client():
+    """
+    Retorna uma instância inicializada do cliente da Groq.
+    """
+    return Groq(api_key=GROQ_API_KEY)
+
+
 def _execute_groq_completion(prompt, max_tokens, response_format=None, retries=3):
     """
     Executa chamadas de chat completion na Groq com suporte a retentativas 
     e backoff exponencial caso ocorra erro de rate limit (429).
     """
-    client = Groq(api_key=GROQ_API_KEY)
+    client = get_groq_client()
     for attempt in range(retries):
         try:
             kwargs = {
