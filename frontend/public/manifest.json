@@ -5,7 +5,7 @@
     {
       "src": "/autodrive_logo.png",
       "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "1254x1254"
     }
   ],
   "start_url": "/cars/index.html",

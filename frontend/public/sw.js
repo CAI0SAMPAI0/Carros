@@ -3,10 +3,6 @@ const ASSETS_TO_CACHE = [
   '/',
   '/cars/',
   '/cars/index.html',
-  '/src/index.css',
-  '/src/cars.ts',
-  '/src/api.ts',
-  '/src/toast.ts',
   '/autodrive_logo.png'
 ];
 
