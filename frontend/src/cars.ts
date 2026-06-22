@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const searchInput    = document.getElementById('search-input')    as HTMLInputElement | null;
     const brandFilter    = document.getElementById('brand-filter')    as HTMLSelectElement | null;
     const categoryFilter = document.getElementById('category-filter') as HTMLSelectElement | null;
+    const orderingFilter = document.getElementById('ordering-filter') as HTMLSelectElement | null;
     const loadMoreBtn    = document.getElementById('load-more-btn')   as HTMLButtonElement | null;
 
     const ITEMS_PER_PAGE = 30;
@@ -161,12 +162,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         const query    = searchInput?.value.toLowerCase().trim() || '';
         const brand    = brandFilter?.value || '';
         const category = categoryFilter?.value || '';
+        const ordering = orderingFilter?.value || '';
 
         try {
             let url = `/api/v1/cars/?page=${currentPage}`;
             if (query)    url += `&search=${encodeURIComponent(query)}`;
             if (brand)    url += `&brand=${encodeURIComponent(brand)}`;
             if (category) url += `&categoria=${encodeURIComponent(category)}`;
+            if (ordering) url += `&ordering=${encodeURIComponent(ordering)}`;
 
             const response = await apiFetch<{ results: Car[], count: number, has_next: boolean }>(url);
             document.querySelectorAll('.temp-skeleton').forEach(el => el.remove());
@@ -283,6 +286,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const savedQuery = sessionStorage.getItem('last_search_query');
     if (savedQuery && searchInput) searchInput.value = savedQuery;
 
+    const savedOrdering = sessionStorage.getItem('last_selected_ordering');
+    if (savedOrdering && orderingFilter) orderingFilter.value = savedOrdering;
+
     await Promise.all([loadBrands(), loadCategories()]);
     loadCars(true);
 
@@ -301,6 +307,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     categoryFilter?.addEventListener('change', () => {
         if (categoryFilter) sessionStorage.setItem('last_selected_category', categoryFilter.value);
+        loadCars(true);
+    });
+
+    orderingFilter?.addEventListener('change', () => {
+        if (orderingFilter) sessionStorage.setItem('last_selected_ordering', orderingFilter.value);
         loadCars(true);
     });
 

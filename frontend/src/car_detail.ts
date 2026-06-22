@@ -121,6 +121,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
+        // Configurar Botão de WhatsApp
+        const btnWhatsapp = document.getElementById('btn-whatsapp') as HTMLAnchorElement | null;
+        const whatsappBtnContainer = document.getElementById('whatsapp-btn-container');
+        if (btnWhatsapp && whatsappBtnContainer) {
+            const contactPhone = "5511999999999"; // Telefone fictício da concessionária
+            const messageText = `Olá! Gostaria de mais informações sobre o ${car.marca || ''} ${car.modelo} (${car.ano_modelo || car.ano_fabricacao || ''}) anunciado por ${precoFormatado} no AutoDrive. Link: ${window.location.href}`;
+            btnWhatsapp.href = `https://wa.me/${contactPhone}?text=${encodeURIComponent(messageText)}`;
+            whatsappBtnContainer.style.display = 'block';
+        }
+
         // Configurar Ações
         if (btnEdit) {
             btnEdit.addEventListener('click', () => {
@@ -128,25 +138,45 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        if (btnDelete) {
-            btnDelete.addEventListener('click', async () => {
-                const confirmDelete = confirm(`Deseja realmente excluir o carro ${car.modelo}?`);
-                if (confirmDelete) {
-                    try {
-                        const result = await apiFetch<any>(`/api/v1/car/${car.id}/`, {
-                            method: 'DELETE'
-                        });
-                        if (result) {
-                            showToast('Carro excluído com sucesso!', 'success');
-                            setTimeout(() => {
-                                window.location.href = '../cars/';
-                            }, 1500);
-                        } else {
-                            showToast('Falha ao excluir carro.', 'error');
-                        }
-                    } catch (err: any) {
-                        showToast('Erro ao excluir carro: ' + err.message, 'error');
+        // Configurar Ações do Modal Customizado
+        const confirmModal   = document.getElementById('confirm-modal');
+        const modalCarName   = document.getElementById('modal-car-name');
+        const modalCancel    = document.getElementById('modal-cancel-btn');
+        const modalConfirm   = document.getElementById('modal-confirm-btn');
+
+        if (btnDelete && confirmModal && modalCarName && modalCancel && modalConfirm) {
+            btnDelete.addEventListener('click', () => {
+                modalCarName.textContent = `${car.marca || ''} ${car.modelo}`;
+                confirmModal.style.display = 'flex';
+            });
+
+            const closeModal = () => {
+                confirmModal.style.display = 'none';
+            };
+
+            modalCancel.addEventListener('click', closeModal);
+            
+            // Fecha ao clicar fora (backdrop)
+            confirmModal.addEventListener('click', (e) => {
+                if (e.target === confirmModal) closeModal();
+            });
+
+            modalConfirm.addEventListener('click', async () => {
+                closeModal();
+                try {
+                    const result = await apiFetch<any>(`/api/v1/car/${car.id}/`, {
+                        method: 'DELETE'
+                    });
+                    if (result) {
+                        showToast('Carro excluído com sucesso!', 'success');
+                        setTimeout(() => {
+                            window.location.href = '../cars/';
+                        }, 1500);
+                    } else {
+                        showToast('Falha ao excluir carro.', 'error');
                     }
+                } catch (err: any) {
+                    showToast('Erro ao excluir carro: ' + err.message, 'error');
                 }
             });
         }

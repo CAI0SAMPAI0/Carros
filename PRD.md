@@ -90,14 +90,14 @@ Nesta seção, listamos as sprints de desenvolvimento para a melhoria contínua 
   - [X] Adicionar decodificação assíncrona (`decoding="async"`) e efeitos CSS de fade-in no [index.css](file:///C:/Users/caio/Documents/GitHub/Vehicles/frontend/src/index.css).
   - [X] Otimizar a imagem principal no detalhamento em [car_detail.ts](file:///C:/Users/caio/Documents/GitHub/Vehicles/frontend/src/car_detail.ts).
 - [ ] **Sprint 8: Sugestões de Melhorias de Sistema (Backlog)**
-  - [ ] **Melhoria 1**: Conversão automática das fotos para WebP com compressão leve no Django.
+  - [X] **Melhoria 1**: Conversão automática das fotos para WebP com compressão leve no Django (otimização de banda/armazenamento).
   - [ ] **Melhoria 2**: Implementar Placeholders Base64/Blurhash inline no JSON das APIs.
   - [ ] **Melhoria 3**: Configurar Service Workers e cache local de assets no navegador (PWA).
   - [ ] **Melhoria 4**: Adicionar máscaras dinâmicas de input no cadastro (placa, valor, ano).
-  - [ ] **Melhoria 5**: Substituir popups e confirms nativos por modais em CSS.
+  - [X] **Melhoria 5**: Substituir popups e confirms nativos por modais em CSS (design premium customizado).
   - [ ] **Melhoria 6**: Integrar autenticação por JWT e Refresh Tokens.
   - [ ] **Melhoria 7**: Adicionar fila de retentativas para erros de rate limit (`429`) da Groq.
-  - [ ] **Melhoria 8**: Adicionar ordenação (preco/ano) diretamente nos filtros e buscas.
+  - [X] **Melhoria 8**: Adicionar ordenação (preco/ano) diretamente nos filtros e buscas (backend & frontend).
   - [ ] **Melhoria 9**: Monitorar links de imagens quebrados via cron semanal de checagem.
   - [ ] **Melhoria 10**: Configurar suporte multi-idiomas (i18n).
 - [ ] **Sprint 9: Novidades e Inovações (Backlog)**
@@ -105,7 +105,7 @@ Nesta seção, listamos as sprints de desenvolvimento para a melhoria contínua 
   - [ ] **Novidade 2**: Busca semântica conversacional usando embeddings da Groq e `pgvector`.
   - [ ] **Novidade 3**: Widget simulador de parcelas de financiamento na tela de detalhes.
   - [ ] **Novidade 4**: Histórico de depreciação FIPE com gráfico interativo.
-  - [ ] **Novidade 5**: Exportação de PDF técnico e link de compartilhamento direto no WhatsApp.
+  - [X] **Novidade 5**: Link de contato/interesse direto no WhatsApp contendo dados consolidados do veículo e link da página.
   - [ ] **Novidade 6**: Permitir cadastro de múltiplas fotos com carrossel interativo.
   - [ ] **Novidade 7**: Extração inteligente da ficha técnica completa estruturada por IA.
   - [ ] **Novidade 8**: Dashboard administrativo com estatísticas e relatórios de buscas.

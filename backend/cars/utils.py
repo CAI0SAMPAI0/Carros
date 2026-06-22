@@ -163,7 +163,21 @@ def fetch_and_save_car_photo_with_hashes(car_id, existing_hashes):
                                 print(f"   [Foto Duplicada] Hash já cadastrado. Pulando: {url}")
                                 continue
 
-                            file_name = f"{brand_name}_{model_name}_{year}.jpg".replace(" ", "_").lower()
+                            # Converte imagem para WebP para otimização de banda/armazenamento
+                            try:
+                                from PIL import Image
+                                img = Image.open(io.BytesIO(img_content))
+                                if img.mode in ('RGBA', 'LA', 'P'):
+                                    img = img.convert('RGB')
+                                output = io.BytesIO()
+                                img.save(output, format='WEBP', quality=80)
+                                img_content = output.getvalue()
+                                file_name = f"{brand_name}_{model_name}_{year}.webp".replace(" ", "_").lower()
+                                print(f"   [WebP] Imagem convertida com sucesso para WebP.")
+                            except Exception as e:
+                                print(f"   [WebP Conversão Erro] Mantendo formato original: {e}")
+                                file_name = f"{brand_name}_{model_name}_{year}.jpg".replace(" ", "_").lower()
+
                             car.skip_signal = True
                             car.photo.save(file_name, ContentFile(img_content), save=True)
                             print(f"   [Sucesso] Imagem única salva para {brand_name} {model_name}: {url}")

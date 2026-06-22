@@ -66,6 +66,7 @@ def cars_api_list(request):
     search = request.GET.get('search', '')
     brand = request.GET.get('brand', '')
     categoria = request.GET.get('categoria', '')
+    ordering = request.GET.get('ordering', '')
     page = request.GET.get('page', '1')
 
     try:
@@ -73,12 +74,23 @@ def cars_api_list(request):
     except ValueError:
         page = 1
 
-    cache_key = f'cars_api_list_{search}_{brand}_{categoria}_{page}'
+    cache_key = f'cars_api_list_{search}_{brand}_{categoria}_{ordering}_{page}'
     cached_cars = cache.get(cache_key)
     if cached_cars:
         return JsonResponse(cached_cars)
 
-    cars = Car.objects.select_related('brand').all().order_by('model')
+    cars = Car.objects.select_related('brand').all()
+    
+    if ordering == 'price_asc':
+        cars = cars.order_by('value')
+    elif ordering == 'price_desc':
+        cars = cars.order_by('-value')
+    elif ordering == 'year_desc':
+        cars = cars.order_by('-model_year')
+    elif ordering == 'year_asc':
+        cars = cars.order_by('model_year')
+    else:
+        cars = cars.order_by('model')
 
     if search:
         from django.db.models import Q

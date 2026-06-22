@@ -69,6 +69,15 @@
                     <div class="bio-title">Descrição</div>
                     <p id="car-bio" class="bio-text"></p>
                 </div>
+
+                <div class="whatsapp-btn-container" id="whatsapp-btn-container" style="display: none; margin-top: 1.5rem;">
+                    <a id="btn-whatsapp" href="#" target="_blank" class="btn btn-whatsapp" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; text-decoration: none;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display: inline-block;">
+                            <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.003 5.324 5.328 0 11.859 0c3.161.001 6.136 1.233 8.375 3.474 2.239 2.24 3.471 5.215 3.47 8.378-.003 6.533-5.327 11.858-11.859 11.858-.198 0-.395-.015-.591-.044L0 24zm6.59-19.167c-.12-.267-.245-.272-.358-.277-.113-.005-.241-.005-.37-.005-.129 0-.339.048-.517.244-.178.195-.679.662-.679 1.615 0 .953.695 1.874.792 2.003.097.129 1.336 2.158 3.284 2.946.463.187.825.298 1.106.387.465.147.888.127 1.224.077.373-.056 1.15-.47 1.312-.924.162-.454.162-.843.113-.924-.048-.08-.178-.129-.37-.227-.194-.097-1.15-.567-1.328-.631-.178-.065-.308-.097-.437.097-.129.195-.502.631-.614.76-.113.129-.227.146-.42.048-.194-.097-.82-.302-1.562-.962-.577-.515-.967-1.152-1.08-1.346-.113-.195-.012-.3.085-.397.087-.088.194-.227.291-.34.097-.114.129-.195.194-.325.065-.129.032-.244-.016-.34-.049-.097-.436-1.077-.608-1.488z"/>
+                        </svg>
+                        <span>Tenho Interesse (WhatsApp)</span>
+                    </a>
+                </div>
                 
                 <div class="detail-actions" id="detail-actions" style="display: none;">
                     <button id="btn-edit" class="btn btn-primary">Editar veículo</button>
@@ -77,6 +86,23 @@
             </div>
         </div>
     </main>
+
+    <!-- CUSTOM MODAL FOR DELETE CONFIRMATION -->
+    <div id="confirm-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Confirmar Exclusão</h3>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza de que deseja excluir o veículo <strong id="modal-car-name"></strong> do estoque?</p>
+                <p style="color: var(--red); font-size: 0.85rem; margin-top: 0.5rem;">Esta ação é permanente e não poderá ser desfeita.</p>
+            </div>
+            <div class="modal-actions">
+                <button id="modal-cancel-btn" class="btn btn-ghost">Cancelar</button>
+                <button id="modal-confirm-btn" class="btn btn-danger">Excluir Permanentemente</button>
+            </div>
+        </div>
+    </div>
 
     <!-- FOOTER -->
     <footer>
