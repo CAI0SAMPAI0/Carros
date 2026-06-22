@@ -94,6 +94,72 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (brandTag) brandTag.textContent = car.marca || 'MARCA';
         if (modelTitle) modelTitle.textContent = car.modelo;
         if (valueDisplay) valueDisplay.textContent = precoFormatado;
+
+        // Configurar Simulador de Financiamento se houver preço
+        const simCard = document.getElementById('financing-simulator-card');
+        const simEntrada = document.getElementById('sim-entrada') as HTMLInputElement | null;
+        const simParcelas = document.getElementById('sim-parcelas') as HTMLSelectElement | null;
+        const simResultValue = document.getElementById('sim-result-value');
+
+        if (car.preco && simCard && simEntrada && simParcelas && simResultValue) {
+            simCard.style.display = 'block';
+            
+            // Entrada padrão de 30% arredondada
+            const defaultEntrada = Math.round(car.preco * 0.3);
+            simEntrada.value = new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+                maximumFractionDigits: 0
+            }).format(defaultEntrada);
+
+            const calculateFinancing = () => {
+                if (!car.preco) return;
+                
+                let entradaVal = 0;
+                const cleanStr = simEntrada.value.replace(/\D/g, '');
+                if (cleanStr) {
+                    entradaVal = parseFloat(cleanStr);
+                }
+                
+                const financedAmount = car.preco - entradaVal;
+                if (financedAmount <= 0) {
+                    simResultValue.textContent = 'R$ 0,00';
+                    return;
+                }
+                
+                const months = parseInt(simParcelas.value) || 48;
+                const monthlyInterestRate = 0.015; // Taxa de 1.5% a.m.
+                
+                // Fórmula Price: P = (A * i) / (1 - (1 + i)^-n)
+                const installment = (financedAmount * monthlyInterestRate) / (1 - Math.pow(1 + monthlyInterestRate, -months));
+                
+                simResultValue.textContent = new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                    maximumFractionDigits: 2
+                }).format(installment);
+            };
+
+            simEntrada.addEventListener('input', () => {
+                let val = simEntrada.value.replace(/\D/g, '');
+                if (val) {
+                    const numberVal = parseFloat(val);
+                    simEntrada.value = new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                        maximumFractionDigits: 0
+                    }).format(numberVal);
+                } else {
+                    simEntrada.value = '';
+                }
+                calculateFinancing();
+            });
+
+            simParcelas.addEventListener('change', calculateFinancing);
+            
+            // Cálculo inicial
+            calculateFinancing();
+        }
         
         // Exibir bio se houver
         const bioCard = document.getElementById('car-bio-card');

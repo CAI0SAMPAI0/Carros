@@ -93,17 +93,17 @@ Nesta seção, listamos as sprints de desenvolvimento para a melhoria contínua 
   - [X] **Melhoria 1**: Conversão automática das fotos para WebP com compressão leve no Django (otimização de banda/armazenamento).
   - [ ] **Melhoria 2**: Implementar Placeholders Base64/Blurhash inline no JSON das APIs.
   - [ ] **Melhoria 3**: Configurar Service Workers e cache local de assets no navegador (PWA).
-  - [ ] **Melhoria 4**: Adicionar máscaras dinâmicas de input no cadastro (placa, valor, ano).
+  - [X] **Melhoria 4**: Adicionar máscaras dinâmicas de input no cadastro (placa, valor, ano) com normalização de dados para o backend.
   - [X] **Melhoria 5**: Substituir popups e confirms nativos por modais em CSS (design premium customizado).
   - [ ] **Melhoria 6**: Integrar autenticação por JWT e Refresh Tokens.
-  - [ ] **Melhoria 7**: Adicionar fila de retentativas para erros de rate limit (`429`) da Groq.
+  - [X] **Melhoria 7**: Adicionar fila de retentativas com backoff exponencial para erros de rate limit (`429`) da Groq na API.
   - [X] **Melhoria 8**: Adicionar ordenação (preco/ano) diretamente nos filtros e buscas (backend & frontend).
   - [ ] **Melhoria 9**: Monitorar links de imagens quebrados via cron semanal de checagem.
   - [ ] **Melhoria 10**: Configurar suporte multi-idiomas (i18n).
 - [ ] **Sprint 9: Novidades e Inovações (Backlog)**
   - [ ] **Novidade 1**: Criar painel comparador de até 3 veículos lado a lado.
   - [ ] **Novidade 2**: Busca semântica conversacional usando embeddings da Groq e `pgvector`.
-  - [ ] **Novidade 3**: Widget simulador de parcelas de financiamento na tela de detalhes.
+  - [X] **Novidade 3**: Widget simulador de parcelas de financiamento na tela de detalhes (interativo com taxa est. de 1.5% a.m.).
   - [ ] **Novidade 4**: Histórico de depreciação FIPE com gráfico interativo.
   - [X] **Novidade 5**: Link de contato/interesse direto no WhatsApp contendo dados consolidados do veículo e link da página.
   - [ ] **Novidade 6**: Permitir cadastro de múltiplas fotos com carrossel interativo.

@@ -80,7 +80,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (factoryYearInput && car.ano_fabricacao) factoryYearInput.value = car.ano_fabricacao.toString();
                 if (modelYearInput && car.ano_modelo) modelYearInput.value = car.ano_modelo.toString();
                 if (plateInput) plateInput.value = car.placa || '';
-                if (valueInput && car.preco) valueInput.value = car.preco.toString();
+                if (valueInput && car.preco) {
+                    valueInput.value = new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                        minimumFractionDigits: 2
+                    }).format(car.preco);
+                }
                 if (bioInput && car.descricao) bioInput.value = car.descricao;
 
                 // Exibe imagem atual se houver
@@ -106,6 +112,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             e.preventDefault();
 
             const formData = new FormData(carForm);
+
+            // Limpa formatação de moeda antes do envio
+            const rawValue = formData.get('value') as string | null;
+            if (rawValue) {
+                const cleanValue = rawValue.replace(/[^\d,]/g, '').replace(',', '.');
+                formData.set('value', cleanValue);
+            }
 
             const token = localStorage.getItem('auth_token');
             const headers: Record<string, string> = {};
@@ -144,6 +157,47 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } catch (err: any) {
                 showToast('Erro de conexão ao salvar carro: ' + err.message, 'error');
+            }
+        });
+    }
+
+    // ── Configurar Máscaras de Entrada ──────────────────────────
+    const factoryYearInput = document.getElementById('factory_year') as HTMLInputElement | null;
+    const modelYearInput = document.getElementById('model_year') as HTMLInputElement | null;
+    const plateInput = document.getElementById('plate') as HTMLInputElement | null;
+    const valueInput = document.getElementById('value') as HTMLInputElement | null;
+
+    const setupYearMask = (input: HTMLInputElement) => {
+        input.addEventListener('input', () => {
+            input.value = input.value.replace(/\D/g, '').substring(0, 4);
+        });
+    };
+
+    if (factoryYearInput) setupYearMask(factoryYearInput);
+    if (modelYearInput) setupYearMask(modelYearInput);
+
+    if (plateInput) {
+        plateInput.addEventListener('input', () => {
+            let val = plateInput.value.toUpperCase().replace(/[^A-Z0-9-]/g, '');
+            if (val.length > 8) {
+                val = val.substring(0, 8);
+            }
+            plateInput.value = val;
+        });
+    }
+
+    if (valueInput) {
+        valueInput.addEventListener('input', () => {
+            let val = valueInput.value.replace(/\D/g, '');
+            if (val) {
+                const numberVal = parseFloat(val) / 100;
+                valueInput.value = new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                    minimumFractionDigits: 2
+                }).format(numberVal);
+            } else {
+                valueInput.value = '';
             }
         });
     }

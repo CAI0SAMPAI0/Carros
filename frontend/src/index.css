@@ -360,7 +360,7 @@ footer p {
   z-index: 1;
 }
 
-@media (min-width: 1324px) {
+@media (min-width: 1450px) {
   .search-strip::before {
     display: block;
   }

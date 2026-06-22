@@ -70,6 +70,33 @@
                     <p id="car-bio" class="bio-text"></p>
                 </div>
 
+                <!-- Financing Simulator -->
+                <div class="specs-card" id="financing-simulator-card" style="margin-top: 1.5rem; display: none;">
+                    <div class="specs-title">Simulador de Financiamento</div>
+                    
+                    <div class="spec-row" style="margin-bottom: 0.75rem;">
+                        <span class="spec-label">Entrada (R$)</span>
+                        <input type="text" id="sim-entrada" placeholder="Valor da entrada" style="background: var(--dark); border: 1px solid var(--border); color: var(--text-hi); padding: 0.35rem 0.5rem; border-radius: 4px; font-size: 0.85rem; width: 125px; text-align: right;">
+                    </div>
+                    
+                    <div class="spec-row" style="margin-bottom: 0.75rem;">
+                        <span class="spec-label">Parcelas</span>
+                        <select id="sim-parcelas" style="background: var(--dark); border: 1px solid var(--border); color: var(--text-hi); padding: 0.35rem 0.5rem; border-radius: 4px; font-size: 0.85rem; width: 125px;">
+                            <option value="12">12x</option>
+                            <option value="24">24x</option>
+                            <option value="36">36x</option>
+                            <option value="48" selected>48x</option>
+                            <option value="60">60x</option>
+                        </select>
+                    </div>
+
+                    <div class="spec-row" style="border-top: 1px dashed var(--border); padding-top: 0.75rem; margin-top: 0.75rem; align-items: center;">
+                        <span class="spec-label" style="font-weight: 600; color: var(--text-hi);">Parcela Estimada</span>
+                        <span id="sim-result-value" class="spec-value" style="font-weight: 700; color: var(--gold); font-size: 1.15rem;">R$ 0,00</span>
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--muted); text-align: right; margin-top: 0.25rem;">Taxa est. de 1.5% a.m.</div>
+                </div>
+
                 <div class="whatsapp-btn-container" id="whatsapp-btn-container" style="display: none; margin-top: 1.5rem;">
                     <a id="btn-whatsapp" href="#" target="_blank" class="btn btn-whatsapp" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; text-decoration: none;">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display: inline-block;">
