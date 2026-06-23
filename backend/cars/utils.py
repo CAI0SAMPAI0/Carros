@@ -174,8 +174,8 @@ def _fetch_wikipedia_thumbnail(brand_name, model_name, year, headers):
                                     return thumb_url
                                 else:
                                     print(f"   [Wikipedia-{wiki_lang}] Aspecto inválido rejeitado: {thumb_url}", flush=True)
-                            except Exception as e:
-                                print(f"   [Wikipedia-{wiki_lang}] Erro ao validar thumbnail: {e}", flush=True)
+                        except Exception as e:
+                            print(f"   [Wikipedia-{wiki_lang}] Erro ao validar thumbnail: {e}", flush=True)
             except Exception as e:
                 print(f"   [Wikipedia-{wiki_lang}] Erro na busca para '{title}': {e}", flush=True)
                 continue
