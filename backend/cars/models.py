@@ -42,6 +42,7 @@ class Car(models.Model):
         default='BRL',
     )
     photo = models.ImageField(upload_to='cars/', blank=True, null=True)
+    photo_url = models.URLField(max_length=1000, blank=True, null=True)
     photo_placeholder = models.TextField(blank=True, null=True)
     ficha_tecnica = models.TextField(blank=True, null=True)
     bio = models.TextField(blank=True, null=True)
@@ -54,7 +55,8 @@ class Car(models.Model):
     )
     
     def save(self, *args, **kwargs):
-        # Gera o placeholder em base64 se houver uma nova foto e nenhum placeholder gerado
+        # Gera o placeholder em base64 se houver uma nova foto (arquivo) e nenhum placeholder gerado
+        # Nota: photo_url (URL externa) não gera placeholder — o frontend usa o placeholder como fallback
         if self.photo and not self.photo_placeholder:
             try:
                 from PIL import Image

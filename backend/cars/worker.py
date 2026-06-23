@@ -124,6 +124,8 @@ def auto_update_photos():
     
     cars_to_update = Car.objects.filter(
         Q(photo='') | Q(photo__isnull=True)
+    ).filter(
+        Q(photo_url='') | Q(photo_url__isnull=True)
     )
     
     if not cars_to_update.exists():
@@ -131,6 +133,7 @@ def auto_update_photos():
         return
         
     print(f"[{datetime.now()}] [Photo Worker] Found {cars_to_update.count()} cars needing photos.", flush=True)
+
     
     try:
         # Carrega os hashes das fotos apenas uma vez por lote
@@ -143,7 +146,7 @@ def auto_update_photos():
             except Car.DoesNotExist:
                 continue
                 
-            if not car.photo:
+            if not car.photo and not car.photo_url:
                 brand_name = car.brand.name
                 model_name = car.model
                 full_name = f"{brand_name} {model_name}"

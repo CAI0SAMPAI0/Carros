@@ -75,8 +75,10 @@ def _url_is_blacklisted(url: str, title: str) -> bool:
 
 def fetch_and_save_car_photo_with_hashes(car_id, existing_hashes):
     """
-    Função interna para buscar e baixar fotos reutilizando o conjunto de hashes fornecido.
-    Aplica blacklist expandida e verificação de aspect ratio para evitar documentos/mapas.
+    Função interna para buscar e salvar a URL da foto do Wikimedia diretamente no campo
+    `photo_url` do banco de dados (PostgreSQL). Nenhum arquivo é baixado para o disco,
+    evitando o problema de filesystem efêmero do Hugging Face Spaces / Render.
+    O parâmetro `existing_hashes` é mantido por compatibilidade mas não é usado.
     """
     from cars.models import Car
     try:
@@ -84,7 +86,7 @@ def fetch_and_save_car_photo_with_hashes(car_id, existing_hashes):
     except Car.DoesNotExist:
         return
 
-    if car.photo:
+    if car.photo or car.photo_url:
         return
 
     brand_name = car.brand.name
@@ -113,7 +115,7 @@ def fetch_and_save_car_photo_with_hashes(car_id, existing_hashes):
             "gsrnamespace": 6,
             "gsrlimit": 8,
             "prop": "imageinfo",
-            "iiprop": "url",
+            "iiprop": "url|mime",
             "iiurlwidth": 1000,
             "format": "json"
         }
@@ -134,55 +136,48 @@ def fetch_and_save_car_photo_with_hashes(car_id, existing_hashes):
 
                         image_info = page_data["imageinfo"][0]
                         url = image_info.get("thumburl") or image_info.get("url", "")
+                        mime = image_info.get("mime", "")
 
                         url_lower = url.lower()
 
                         # Aceita apenas formatos de imagem fotográfica
                         if not any(url_lower.endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.webp']):
-                            continue
+                            # Tenta verificar pelo mime type
+                            if mime and not any(t in mime for t in ['jpeg', 'png', 'webp']):
+                                continue
 
                         # Aplica blacklist de termos proibidos
                         if _url_is_blacklisted(url, title):
                             continue
 
+                        # Valida o aspect ratio baixando apenas os primeiros bytes
                         try:
-                            img_res = requests.get(url, headers=headers, timeout=15)
+                            img_res = requests.get(url, headers=headers, timeout=15, stream=True)
                             if img_res.status_code != 200:
                                 continue
 
-                            img_content = img_res.content
+                            # Lê apenas o suficiente para verificar o aspect ratio (max 200KB)
+                            img_content = b""
+                            for chunk in img_res.iter_content(chunk_size=8192):
+                                img_content += chunk
+                                if len(img_content) >= 204800:
+                                    break
+                            img_res.close()
 
-                            # Verifica aspect ratio (rejeita documentos portrait)
                             if not _is_valid_car_image(img_content):
-                                print(f"   [Aspecto Inválido] Imagem rejeitada (documento/portrait): {url}")
+                                print(f"   [Aspecto Inválido] Imagem rejeitada (documento/portrait): {url}", flush=True)
                                 continue
 
-                            img_hash = hashlib.md5(img_content).hexdigest()
+                        except Exception as e:
+                            print(f"   [Validação] Erro ao validar imagem {url}: {e}", flush=True)
+                            continue
 
-                            if img_hash in existing_hashes:
-                                print(f"   [Foto Duplicada] Hash já cadastrado. Pulando: {url}")
-                                continue
-
-                            # Converte imagem para WebP para otimização de banda/armazenamento
-                            try:
-                                from PIL import Image
-                                img = Image.open(io.BytesIO(img_content))
-                                if img.mode in ('RGBA', 'LA', 'P'):
-                                    img = img.convert('RGB')
-                                output = io.BytesIO()
-                                img.save(output, format='WEBP', quality=80)
-                                img_content = output.getvalue()
-                                file_name = f"{brand_name}_{model_name}_{year}.webp".replace(" ", "_").lower()
-                                print(f"   [WebP] Imagem convertida com sucesso para WebP.")
-                            except Exception as e:
-                                print(f"   [WebP Conversão Erro] Mantendo formato original: {e}")
-                                file_name = f"{brand_name}_{model_name}_{year}.jpg".replace(" ", "_").lower()
-
+                        # Salva a URL diretamente no banco (PostgreSQL persiste entre reinicializações)
+                        try:
                             car.skip_signal = True
-                            car.photo.save(file_name, ContentFile(img_content), save=True)
-                            print(f"   [Sucesso] Imagem única salva para {brand_name} {model_name}: {url}")
-
-                            existing_hashes.add(img_hash)
+                            car.photo_url = url
+                            car.save(update_fields=['photo_url'])
+                            print(f"   [Sucesso] URL salva para {brand_name} {model_name}: {url}", flush=True)
 
                             from django.core.cache import cache
                             try:
@@ -192,10 +187,11 @@ def fetch_and_save_car_photo_with_hashes(car_id, existing_hashes):
                             return
 
                         except Exception as e:
-                            print(f"Erro ao baixar/validar imagem de {url}: {e}")
+                            print(f"   [Erro ao salvar URL] {url}: {e}", flush=True)
 
         except Exception as e:
-            print(f"Erro na requisição ao Wikimedia para a busca '{query}': {e}")
+            print(f"Erro na requisição ao Wikimedia para a busca '{query}': {e}", flush=True)
+
 
 
 def fetch_and_save_car_photo(car_id):
