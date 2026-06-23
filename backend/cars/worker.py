@@ -158,8 +158,9 @@ def auto_update_photos():
                 except Exception as e:
                     print(f"   [Photo Worker Erro] Erro ao buscar/salvar foto de {full_name}: {e}", flush=True)
                     
-                # Espera entre downloads para respeitar limites do Commons/Wikimedia
-                time.sleep(3)
+                # Espera entre downloads para respeitar limites das APIs (Wikipedia + Commons)
+                time.sleep(4)
+
                 
     except Exception as e:
         print(f"[{datetime.now()}] [Photo Worker Error] Ocorreu uma exceção: {e}", flush=True)

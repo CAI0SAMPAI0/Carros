@@ -73,12 +73,204 @@ def _url_is_blacklisted(url: str, title: str) -> bool:
     return any(term in url_lower or term in title_lower for term in PHOTO_BLACKLIST)
 
 
+def _try_save_photo_url(car, url, brand_name, model_name):
+    """Tenta salvar uma URL de foto no banco. Retorna True se salvou com sucesso."""
+    try:
+        car.skip_signal = True
+        car.photo_url = url
+        car.save(update_fields=['photo_url'])
+        print(f"   [Sucesso] URL salva para {brand_name} {model_name}: {url}", flush=True)
+        from django.core.cache import cache
+        try:
+            cache.clear()
+        except Exception:
+            pass
+        return True
+    except Exception as e:
+        print(f"   [Erro ao salvar URL] {url}: {e}", flush=True)
+        return False
+
+
+def _fetch_wikipedia_thumbnail(brand_name, model_name, year, headers):
+    """
+    Tenta buscar a thumbnail do artigo da Wikipedia (en/pt) para o carro.
+    Usa a prop=pageimages da API da Mediawiki, que retorna a imagem principal do artigo.
+    Retorna a URL da thumbnail se encontrar, ou None.
+    """
+    # Termos de busca para o título do artigo (do mais específico ao mais genérico)
+    search_titles = [
+        f"{brand_name} {model_name} ({year})" if year else None,
+        f"{brand_name} {model_name}",
+        f"{model_name} ({brand_name})",
+        model_name,
+    ]
+
+    for wiki_lang in ['en', 'pt']:
+        api_url = f"https://{wiki_lang}.wikipedia.org/w/api.php"
+        for title in search_titles:
+            if not title:
+                continue
+            try:
+                # 1. Busca o artigo mais relevante
+                search_params = {
+                    "action": "query",
+                    "list": "search",
+                    "srsearch": title,
+                    "srlimit": 3,
+                    "srprop": "snippet",
+                    "format": "json",
+                }
+                res = requests.get(api_url, params=search_params, headers=headers, timeout=8)
+                if res.status_code != 200:
+                    continue
+                results = res.json().get("query", {}).get("search", [])
+                if not results:
+                    continue
+
+                # Pega o título do artigo mais relevante
+                article_title = results[0]["title"]
+
+                # 2. Busca a thumbnail do artigo
+                image_params = {
+                    "action": "query",
+                    "titles": article_title,
+                    "prop": "pageimages",
+                    "pithumbsize": 1000,
+                    "piprop": "thumbnail",
+                    "format": "json",
+                    "redirects": 1,
+                }
+                img_res = requests.get(api_url, params=image_params, headers=headers, timeout=8)
+                if img_res.status_code != 200:
+                    continue
+
+                pages = img_res.json().get("query", {}).get("pages", {})
+                for page in pages.values():
+                    thumb = page.get("thumbnail", {})
+                    thumb_url = thumb.get("source", "")
+                    if thumb_url:
+                        # Valida que não é logo, bandeira, etc.
+                        if not _url_is_blacklisted(thumb_url, article_title):
+                            # Valida aspect ratio com sample
+                            try:
+                                sample = requests.get(thumb_url, headers=headers, timeout=10, stream=True)
+                                if sample.status_code == 200:
+                                    img_content = b""
+                                    for chunk in sample.iter_content(chunk_size=8192):
+                                        img_content += chunk
+                                        if len(img_content) >= 204800:
+                                            break
+                                    sample.close()
+                                    if _is_valid_car_image(img_content):
+                                        print(f"   [Wikipedia-{wiki_lang}] Thumbnail encontrada para '{article_title}': {thumb_url}", flush=True)
+                                        return thumb_url
+                                    else:
+                                        print(f"   [Wikipedia-{wiki_lang}] Aspecto inválido rejeitado: {thumb_url}", flush=True)
+                            except Exception as e:
+                                print(f"   [Wikipedia-{wiki_lang}] Erro ao validar thumbnail: {e}", flush=True)
+            except Exception as e:
+                print(f"   [Wikipedia-{wiki_lang}] Erro na busca para '{title}': {e}", flush=True)
+                continue
+
+    return None
+
+
+def _fetch_commons_search(brand_name, model_name, year, headers):
+    """
+    Estratégia de fallback: busca imagens no Wikimedia Commons (namespace 6).
+    Retorna a URL da primeira imagem válida encontrada, ou None.
+    """
+    search_url = "https://commons.wikimedia.org/w/api.php"
+
+    # Gera queries progressivamente mais amplas
+    queries_to_try = []
+    if year:
+        queries_to_try.append(f"{brand_name} {model_name} {year}")
+    queries_to_try.append(f"{brand_name} {model_name}")
+    # Evita redundância se brand já está no model (ex: "Abarth Abarth 695")
+    if brand_name.lower() not in model_name.lower():
+        queries_to_try.append(model_name)
+
+    for query in queries_to_try:
+        search_params = {
+            "action": "query",
+            "generator": "search",
+            "gsrsearch": query,
+            "gsrnamespace": 6,
+            "gsrlimit": 10,
+            "prop": "imageinfo",
+            "iiprop": "url|mime",
+            "iiurlwidth": 1000,
+            "format": "json",
+        }
+        try:
+            res = requests.get(search_url, params=search_params, headers=headers, timeout=10)
+            if res.status_code != 200:
+                continue
+            data = res.json()
+            pages = data.get("query", {}).get("pages", {})
+            if not pages:
+                print(f"   [Commons] Nenhum resultado para query: '{query}'", flush=True)
+                continue
+
+            pages_list = sorted(pages.values(), key=lambda x: x.get("index", 999))
+            print(f"   [Commons] Query '{query}': {len(pages_list)} resultados", flush=True)
+
+            for page_data in pages_list:
+                title = page_data.get("title", "")
+                if "imageinfo" not in page_data:
+                    continue
+                image_info = page_data["imageinfo"][0]
+                url = image_info.get("thumburl") or image_info.get("url", "")
+                mime = image_info.get("mime", "")
+                url_lower = url.lower()
+
+                # Verifica extensão/mime
+                ext_ok = any(url_lower.endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.webp'])
+                mime_ok = any(t in mime for t in ['jpeg', 'png', 'webp'])
+                if not ext_ok and not mime_ok:
+                    print(f"   [Commons] Formato rejeitado ({mime}): {title}", flush=True)
+                    continue
+
+                # Verifica blacklist
+                if _url_is_blacklisted(url, title):
+                    print(f"   [Commons] Blacklist rejeitou: {title}", flush=True)
+                    continue
+
+                # Valida aspect ratio
+                try:
+                    sample = requests.get(url, headers=headers, timeout=12, stream=True)
+                    if sample.status_code != 200:
+                        print(f"   [Commons] HTTP {sample.status_code} ao baixar: {url}", flush=True)
+                        continue
+                    img_content = b""
+                    for chunk in sample.iter_content(chunk_size=8192):
+                        img_content += chunk
+                        if len(img_content) >= 204800:
+                            break
+                    sample.close()
+                    if not _is_valid_car_image(img_content):
+                        print(f"   [Commons] Aspecto inválido: {title}", flush=True)
+                        continue
+                    print(f"   [Commons] Válida: {title}", flush=True)
+                    return url
+                except Exception as e:
+                    print(f"   [Commons] Erro ao validar '{title}': {e}", flush=True)
+                    continue
+
+        except Exception as e:
+            print(f"   [Commons] Erro na requisição para '{query}': {e}", flush=True)
+
+    return None
+
+
 def fetch_and_save_car_photo_with_hashes(car_id, existing_hashes):
     """
-    Função interna para buscar e salvar a URL da foto do Wikimedia diretamente no campo
-    `photo_url` do banco de dados (PostgreSQL). Nenhum arquivo é baixado para o disco,
-    evitando o problema de filesystem efêmero do Hugging Face Spaces / Render.
-    O parâmetro `existing_hashes` é mantido por compatibilidade mas não é usado.
+    Busca e salva a URL da foto de um carro diretamente no campo `photo_url` (PostgreSQL).
+    Estratégia:
+      1. Wikipedia pageimages API (en + pt) — thumbnail do artigo, mais confiável
+      2. Wikimedia Commons search — fallback para carros não cobertos pela Wikipedia
+    Nenhum arquivo é baixado para o disco local.
     """
     from cars.models import Car
     try:
@@ -92,105 +284,23 @@ def fetch_and_save_car_photo_with_hashes(car_id, existing_hashes):
     brand_name = car.brand.name
     model_name = car.model
     year = car.model_year or car.factory_year or ""
-
-    queries_to_try = [
-        f"{brand_name} {model_name} {year} automóvel",
-        f"{brand_name} {model_name} {year} car",
-        f"{brand_name} {model_name} car",
-        f"{brand_name} {model_name}",
-    ]
-
     headers = {"User-Agent": "CarrosBot/1.0 (cmsampaio71@gmail.com)"}
-    search_url = "https://commons.wikimedia.org/w/api.php"
 
-    for query in queries_to_try:
-        query = query.strip()
-        if not query:
-            continue
+    # --- Estratégia 1: Wikipedia pageimages ---
+    thumb_url = _fetch_wikipedia_thumbnail(brand_name, model_name, year, headers)
+    if thumb_url:
+        _try_save_photo_url(car, thumb_url, brand_name, model_name)
+        return
 
-        search_params = {
-            "action": "query",
-            "generator": "search",
-            "gsrsearch": query,
-            "gsrnamespace": 6,
-            "gsrlimit": 8,
-            "prop": "imageinfo",
-            "iiprop": "url|mime",
-            "iiurlwidth": 1000,
-            "format": "json"
-        }
+    # --- Estratégia 2: Wikimedia Commons search ---
+    commons_url = _fetch_commons_search(brand_name, model_name, year, headers)
+    if commons_url:
+        _try_save_photo_url(car, commons_url, brand_name, model_name)
+        return
 
-        try:
-            res = requests.get(search_url, params=search_params, headers=headers, timeout=10)
-            if res.status_code == 200:
-                data = res.json()
-                pages = data.get("query", {}).get("pages", {})
-                if pages:
-                    pages_list = list(pages.values())
-                    pages_list.sort(key=lambda x: x.get("index", 999))
+    print(f"   [Sem Foto] Nenhuma imagem válida encontrada para {brand_name} {model_name}", flush=True)
 
-                    for page_data in pages_list:
-                        title = page_data.get("title", "")
-                        if "imageinfo" not in page_data:
-                            continue
 
-                        image_info = page_data["imageinfo"][0]
-                        url = image_info.get("thumburl") or image_info.get("url", "")
-                        mime = image_info.get("mime", "")
-
-                        url_lower = url.lower()
-
-                        # Aceita apenas formatos de imagem fotográfica
-                        if not any(url_lower.endswith(ext) for ext in ['.jpg', '.jpeg', '.png', '.webp']):
-                            # Tenta verificar pelo mime type
-                            if mime and not any(t in mime for t in ['jpeg', 'png', 'webp']):
-                                continue
-
-                        # Aplica blacklist de termos proibidos
-                        if _url_is_blacklisted(url, title):
-                            continue
-
-                        # Valida o aspect ratio baixando apenas os primeiros bytes
-                        try:
-                            img_res = requests.get(url, headers=headers, timeout=15, stream=True)
-                            if img_res.status_code != 200:
-                                continue
-
-                            # Lê apenas o suficiente para verificar o aspect ratio (max 200KB)
-                            img_content = b""
-                            for chunk in img_res.iter_content(chunk_size=8192):
-                                img_content += chunk
-                                if len(img_content) >= 204800:
-                                    break
-                            img_res.close()
-
-                            if not _is_valid_car_image(img_content):
-                                print(f"   [Aspecto Inválido] Imagem rejeitada (documento/portrait): {url}", flush=True)
-                                continue
-
-                        except Exception as e:
-                            print(f"   [Validação] Erro ao validar imagem {url}: {e}", flush=True)
-                            continue
-
-                        # Salva a URL diretamente no banco (PostgreSQL persiste entre reinicializações)
-                        try:
-                            car.skip_signal = True
-                            car.photo_url = url
-                            car.save(update_fields=['photo_url'])
-                            print(f"   [Sucesso] URL salva para {brand_name} {model_name}: {url}", flush=True)
-
-                            from django.core.cache import cache
-                            try:
-                                cache.clear()
-                            except Exception:
-                                pass
-                            return
-
-                        except Exception as e:
-                            print(f"   [Erro ao salvar URL] {url}: {e}", flush=True)
-
-        except Exception as e:
-            print(f"Erro na requisição ao Wikimedia para a busca '{query}': {e}", flush=True)
 
 
 
