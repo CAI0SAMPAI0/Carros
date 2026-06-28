@@ -73,7 +73,8 @@ class Car(models.Model):
                 buffer = io.BytesIO()
                 img.save(buffer, format='JPEG', quality=20)
                 self.photo_placeholder = f"data:image/jpeg;base64,{base64.b64encode(buffer.getvalue()).decode('utf-8')}"
-                self.photo.close()
+                # Reposiciona o ponteiro no início para o Django poder ler e salvar o arquivo
+                self.photo.seek(0)
             except Exception as e:
                 print(f"[Placeholder] Erro ao gerar: {e}", flush=True)
         super().save(*args, **kwargs)
@@ -122,7 +123,8 @@ class CarImage(models.Model):
                 buffer = io.BytesIO()
                 img.save(buffer, format='JPEG', quality=20)
                 self.photo_placeholder = f"data:image/jpeg;base64,{base64.b64encode(buffer.getvalue()).decode('utf-8')}"
-                self.image.close()
+                # Reposiciona o ponteiro no início para o Django poder ler e salvar o arquivo
+                self.image.seek(0)
             except Exception as e:
                 print(f"[Extra Image Placeholder] Erro ao gerar: {e}", flush=True)
         super().save(*args, **kwargs)
